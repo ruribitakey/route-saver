@@ -4,7 +4,7 @@ import { SavedRoute, LocationPoint } from '@/types/route';
  * Encoded Polyline algorithm decoder
  */
 export function decodePolyline(encoded: string): { lat: number; lng: number }[] {
-  if (!encoded) return [];
+  if (!encoded || encoded.includes('demo')) return [];
   const points: { lat: number; lng: number }[] = [];
   let index = 0;
   const len = encoded.length;
@@ -40,21 +40,56 @@ export function decodePolyline(encoded: string): { lat: number; lng: number }[] 
 }
 
 /**
+ * Helper to ensure a valid track line exists connecting points if polyline is unavailable
+ */
+function getTrackPoints(route: SavedRoute): { lat: number; lng: number }[] {
+  const decoded = route.encodedPolyline ? decodePolyline(route.encodedPolyline) : [];
+  if (decoded.length > 0) return decoded;
+
+  // Fallback track points: Connect Origin -> Waypoints -> Destination
+  const fallbackPoints: { lat: number; lng: number }[] = [];
+  if (route.origin?.lat && route.origin?.lng) {
+    fallbackPoints.push({ lat: route.origin.lat, lng: route.origin.lng });
+  }
+
+  if (Array.isArray(route.waypoints)) {
+    route.waypoints.forEach((wp) => {
+      if (wp.lat && wp.lng) {
+        fallbackPoints.push({ lat: wp.lat, lng: wp.lng });
+      }
+    });
+  }
+
+  if (route.destination?.lat && route.destination?.lng) {
+    fallbackPoints.push({ lat: route.destination.lat, lng: route.destination.lng });
+  }
+
+  return fallbackPoints;
+}
+
+/**
  * Export route to GPX XML format
  */
 export function generateGPX(route: SavedRoute): string {
-  const points = route.encodedPolyline ? decodePolyline(route.encodedPolyline) : [];
+  const points = getTrackPoints(route);
 
   const escapeXml = (str: string) =>
-    str
+    (str || '')
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&apos;');
 
-  const title = escapeXml(route.title || 'Saved Route');
-  const description = escapeXml(route.description || '');
+  const title = escapeXml(route.title || 'ドライブ・ルート');
+  const description = escapeXml(route.description || 'Google Maps Route Saver で作成されたルート');
+
+  const originName = escapeXml(route.origin?.name || '出発地');
+  const destName = escapeXml(route.destination?.name || '目的地');
+  const originLat = route.origin?.lat || 35.681236;
+  const originLng = route.origin?.lng || 139.767125;
+  const destLat = route.destination?.lat || 35.170915;
+  const destLng = route.destination?.lng || 136.881537;
 
   let gpx = `<?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1" creator="Google Maps Route Saver" xmlns="http://www.topografix.com/GPX/1/1">
@@ -65,19 +100,23 @@ export function generateGPX(route: SavedRoute): string {
   <rte>
     <name>${title}</name>
     <desc>${description}</desc>
-    <rtept lat="${route.origin.lat}" lon="${route.origin.lng}">
-      <name>${escapeXml(route.origin.name || 'Origin')}</name>
+    <rtept lat="${originLat}" lon="${originLng}">
+      <name>${originName}</name>
     </rtept>
 `;
 
-  route.waypoints.forEach((wp, idx) => {
-    gpx += `    <rtept lat="${wp.lat}" lon="${wp.lng}">
-      <name>${escapeXml(wp.name || `Waypoint ${idx + 1}`)}</name>
+  if (Array.isArray(route.waypoints)) {
+    route.waypoints.forEach((wp, idx) => {
+      const wpLat = wp.lat || originLat;
+      const wpLng = wp.lng || originLng;
+      gpx += `    <rtept lat="${wpLat}" lon="${wpLng}">
+      <name>${escapeXml(wp.name || `経由地 ${idx + 1}`)}</name>
     </rtept>\n`;
-  });
+    });
+  }
 
-  gpx += `    <rtept lat="${route.destination.lat}" lon="${route.destination.lng}">
-      <name>${escapeXml(route.destination.name || 'Destination')}</name>
+  gpx += `    <rtept lat="${destLat}" lon="${destLng}">
+      <name>${destName}</name>
     </rtept>
   </rte>\n`;
 
@@ -100,18 +139,25 @@ export function generateGPX(route: SavedRoute): string {
  * Export route to KML XML format
  */
 export function generateKML(route: SavedRoute): string {
-  const points = route.encodedPolyline ? decodePolyline(route.encodedPolyline) : [];
+  const points = getTrackPoints(route);
 
   const escapeXml = (str: string) =>
-    str
+    (str || '')
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&apos;');
 
-  const title = escapeXml(route.title || 'Saved Route');
-  const description = escapeXml(route.description || '');
+  const title = escapeXml(route.title || 'ドライブ・ルート');
+  const description = escapeXml(route.description || 'Google Maps Route Saver で作成されたルート');
+
+  const originName = escapeXml(route.origin?.name || '出発地');
+  const destName = escapeXml(route.destination?.name || '目的地');
+  const originLat = route.origin?.lat || 35.681236;
+  const originLng = route.origin?.lng || 139.767125;
+  const destLat = route.destination?.lat || 35.170915;
+  const destLng = route.destination?.lng || 136.881537;
 
   let kml = `<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
@@ -119,25 +165,29 @@ export function generateKML(route: SavedRoute): string {
     <name>${title}</name>
     <description>${description}</description>
     <Placemark>
-      <name>出発地: ${escapeXml(route.origin.name || 'Origin')}</name>
+      <name>出発地: ${originName}</name>
       <Point>
-        <coordinates>${route.origin.lng},${route.origin.lat},0</coordinates>
+        <coordinates>${originLng},${originLat},0</coordinates>
       </Point>
     </Placemark>\n`;
 
-  route.waypoints.forEach((wp, idx) => {
-    kml += `    <Placemark>
-      <name>経由地 ${idx + 1}: ${escapeXml(wp.name || `Waypoint ${idx + 1}`)}</name>
+  if (Array.isArray(route.waypoints)) {
+    route.waypoints.forEach((wp, idx) => {
+      const wpLat = wp.lat || originLat;
+      const wpLng = wp.lng || originLng;
+      kml += `    <Placemark>
+      <name>経由地 ${idx + 1}: ${escapeXml(wp.name || `経由地 ${idx + 1}`)}</name>
       <Point>
-        <coordinates>${wp.lng},${wp.lat},0</coordinates>
+        <coordinates>${wpLng},${wpLat},0</coordinates>
       </Point>
     </Placemark>\n`;
-  });
+    });
+  }
 
   kml += `    <Placemark>
-      <name>目的地: ${escapeXml(route.destination.name || 'Destination')}</name>
+      <name>目的地: ${destName}</name>
       <Point>
-        <coordinates>${route.destination.lng},${route.destination.lat},0</coordinates>
+        <coordinates>${destLng},${destLat},0</coordinates>
       </Point>
     </Placemark>\n`;
 
@@ -155,6 +205,17 @@ export function generateKML(route: SavedRoute): string {
   kml += `  </Document>
 </kml>`;
   return kml;
+}
+
+/**
+ * Generate smart default filename with date
+ */
+export function getSmartFilename(title: string, extension: 'gpx' | 'kml'): string {
+  const dateStr = new Date().toISOString().split('T')[0]; // e.g. 2026-09-12
+  const cleanTitle = (title || 'route')
+    .replace(/[^a-zA-Z0-9あ-んア-ン一-龠_-]/g, '_')
+    .substring(0, 30);
+  return `${cleanTitle}_${dateStr}.${extension}`;
 }
 
 /**

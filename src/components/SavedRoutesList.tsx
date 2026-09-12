@@ -6,7 +6,6 @@ import {
   Bookmark,
   Search,
   Tag,
-  MapPin,
   Trash2,
   Download,
   FileCode,
@@ -16,7 +15,7 @@ import {
   Calendar,
   Compass,
 } from 'lucide-react';
-import { generateGPX, generateKML, downloadFile } from '@/lib/gpx-kml-exporter';
+import { generateGPX, generateKML, downloadFile, getSmartFilename } from '@/lib/gpx-kml-exporter';
 
 interface SavedRoutesListProps {
   routes: SavedRoute[];
@@ -219,7 +218,8 @@ export const SavedRoutesList: React.FC<SavedRoutesListProps> = ({
                   <button
                     onClick={() => {
                       const xml = generateGPX(route);
-                      downloadFile(xml, `${route.title || 'route'}.gpx`, 'application/gpx+xml');
+                      const filename = getSmartFilename(route.title, 'gpx');
+                      downloadFile(xml, filename, 'application/gpx+xml');
                     }}
                     title="GPXダウンロード"
                     className="p-2 bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded-xl border border-slate-700 transition-colors"
@@ -230,9 +230,10 @@ export const SavedRoutesList: React.FC<SavedRoutesListProps> = ({
                   <button
                     onClick={() => {
                       const xml = generateKML(route);
+                      const filename = getSmartFilename(route.title, 'kml');
                       downloadFile(
                         xml,
-                        `${route.title || 'route'}.kml`,
+                        filename,
                         'application/vnd.google-earth.kml+xml'
                       );
                     }}
