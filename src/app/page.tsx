@@ -40,7 +40,7 @@ export default function Home() {
   ]);
 
   const [travelMode, setTravelMode] = useState<TravelModeType>('DRIVING');
-  const [tollMode, setTollMode] = useState<TollModeType>('SMART_SAVINGS');
+  const [tollMode, setTollMode] = useState<TollModeType>('HIGHWAY'); // Initial default to HIGHWAY (高速優先)
   const [maxTollAmount, setMaxTollAmount] = useState<number>(300);
   const [calcTrigger, setCalcTrigger] = useState<number>(0);
 
@@ -48,7 +48,7 @@ export default function Home() {
   const [description, setDescription] = useState<string>(
     '大阪を出発し、明石海峡大橋を渡って風光明媚な淡路島・洲本温泉へ向かう快適ドライブコースです。'
   );
-  const [tagsString, setTagsString] = useState<string>('ドライブ, 温泉, 淡路島, 明石海峡大橋, スマート節約');
+  const [tagsString, setTagsString] = useState<string>('ドライブ, 温泉, 淡路島, 明石海峡大橋, 高速優先');
 
   // Calculated Route Details
   const [calculatedData, setCalculatedData] = useState<{
@@ -117,12 +117,12 @@ export default function Home() {
           userId: 'demo-user',
           title: '大阪発 明石海峡大橋ドライブ＆洲本温泉旅',
           description: '明石海峡大橋を渡り、淡路島・洲本温泉でゆったり海を眺める温泉旅コース',
-          tags: ['ドライブ', '温泉', '淡路島', '明石海峡大橋', 'スマート節約'],
+          tags: ['ドライブ', '温泉', '淡路島', '明石海峡大橋', '高速優先'],
           origin: { name: '大阪駅', lat: 34.702485, lng: 135.495951 },
           destination: { name: '洲本温泉', lat: 34.3411, lng: 134.9015 },
           waypoints: [{ name: '明石海峡大橋', lat: 34.6163, lng: 135.0221 }],
           travelMode: 'DRIVING',
-          tollMode: 'SMART_SAVINGS',
+          tollMode: 'HIGHWAY',
           maxTollAmount: 300,
           distanceMeters: 105000,
           durationSeconds: 7800,
@@ -245,7 +245,7 @@ export default function Home() {
     setDestination(route.destination);
     setWaypoints(route.waypoints || []);
     setTravelMode(route.travelMode || 'DRIVING');
-    setTollMode(route.tollMode || 'SMART_SAVINGS');
+    setTollMode(route.tollMode || 'HIGHWAY');
     setMaxTollAmount(route.maxTollAmount || 300);
     setTitle(route.title);
     setDescription(route.description || '');

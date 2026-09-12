@@ -25,7 +25,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   destination,
   waypoints,
   travelMode,
-  tollMode = 'SMART_SAVINGS',
+  tollMode = 'HIGHWAY',
   maxTollAmount = 300,
   calcTrigger = 0,
   onRouteCalculated,
@@ -96,11 +96,11 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     if (isDemoKey || !window.google?.maps) {
       if (origin.name && destination.name) {
         const estToll =
-          tollMode === 'SMART_SAVINGS'
-            ? `約 210 円 (${maxTollAmount}円以下パス許可)`
-            : tollMode === 'HIGHWAY'
-            ? '約 1,820 円'
-            : '0 円 (一般道)';
+          tollMode === 'HIGHWAY'
+            ? '約 1,820 円 (高速優先)'
+            : tollMode === 'SMART_SAVINGS'
+            ? `約 210 円 (${maxTollAmount}円以下バイパス)`
+            : '0 円 (完全一般道)';
 
         setRouteInfo({
           distanceText: '約 105.0 km',
@@ -165,10 +165,10 @@ export const MapContainer: React.FC<MapContainerProps> = ({
               const durationStr = hrs > 0 ? `${hrs}時間 ${remMins}分` : `${mins}分`;
 
               const estTollText =
-                tollMode === 'SMART_SAVINGS'
+                tollMode === 'HIGHWAY'
+                  ? '全高速道路許可'
+                  : tollMode === 'SMART_SAVINGS'
                   ? `格安バイパス優先 (${maxTollAmount}円以下)`
-                  : tollMode === 'HIGHWAY'
-                  ? '全有料道路許可'
                   : '0円 (完全一般道)';
 
               setRouteInfo({
@@ -208,6 +208,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
       {/* Route Info Overlay Bar */}
       <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between pointer-events-none">
         <div className="bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-xl px-4 py-2.5 shadow-xl text-white flex items-center space-x-5 pointer-events-auto">
+          {/* Distance */}
           <div className="flex items-center space-x-2">
             <Compass className="h-5 w-5 text-blue-500" />
             <div>
@@ -220,6 +221,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
 
           <div className="h-6 w-px bg-slate-800" />
 
+          {/* Duration */}
           <div className="flex items-center space-x-2">
             <Clock className="h-5 w-5 text-amber-500" />
             <div>
@@ -230,13 +232,14 @@ export const MapContainer: React.FC<MapContainerProps> = ({
             </div>
           </div>
 
+          {/* Toll Cost / Mode (Placed right next to duration!) */}
           {routeInfo?.estimatedTollText && (
             <>
               <div className="h-6 w-px bg-slate-800" />
               <div className="flex items-center space-x-2">
                 <Coins className="h-5 w-5 text-emerald-400" />
                 <div>
-                  <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">有料道路モード</p>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">高速・有料料金</p>
                   <p className="text-xs font-bold text-emerald-300">
                     {routeInfo.estimatedTollText}
                   </p>
