@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { LocationPoint, TravelModeType, TollModeType, SavedRoute } from '@/types/route';
 import { MapPin, Navigation, Clock, Compass, Coins } from 'lucide-react';
+import { estimateJapaneseToll } from '@/lib/toll-calculator';
 
 interface MapContainerProps {
   origin: LocationPoint;
@@ -91,21 +92,23 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     }
   }, [isMapLoaded, origin.lat, origin.lng]);
 
-  // Calculate route considering Toll Mode and Max Toll Threshold
+  // Calculate route considering Toll Mode, Max Toll Threshold, and Yen Toll Estimation
   useEffect(() => {
     if (isDemoKey || !window.google?.maps) {
       if (origin.name && destination.name) {
-        const estToll =
-          tollMode === 'HIGHWAY'
-            ? '約 1,820 円 (高速優先)'
-            : tollMode === 'SMART_SAVINGS'
-            ? `約 210 円 (${maxTollAmount}円以下バイパス)`
-            : '0 円 (完全一般道)';
+        const tollEst = estimateJapaneseToll({
+          origin,
+          destination,
+          waypoints,
+          distanceMeters: 105000,
+          tollMode,
+          maxTollAmount,
+        });
 
         setRouteInfo({
           distanceText: '約 105.0 km',
           durationText: '約 1時間 50分',
-          estimatedTollText: estToll,
+          estimatedTollText: tollEst.displayText,
         });
 
         if (onRouteCalculated) {
@@ -164,17 +167,19 @@ export const MapContainer: React.FC<MapContainerProps> = ({
               const remMins = mins % 60;
               const durationStr = hrs > 0 ? `${hrs}時間 ${remMins}分` : `${mins}分`;
 
-              const estTollText =
-                tollMode === 'HIGHWAY'
-                  ? '全高速道路許可'
-                  : tollMode === 'SMART_SAVINGS'
-                  ? `格安バイパス優先 (${maxTollAmount}円以下)`
-                  : '0円 (完全一般道)';
+              const tollEst = estimateJapaneseToll({
+                origin,
+                destination,
+                waypoints,
+                distanceMeters: totalDistance,
+                tollMode,
+                maxTollAmount,
+              });
 
               setRouteInfo({
                 distanceText: `${km} km`,
                 durationText: durationStr,
-                estimatedTollText: estTollText,
+                estimatedTollText: tollEst.displayText,
               });
 
               if (onRouteCalculated) {
