@@ -9,6 +9,7 @@ import { LocationPoint, TravelModeType, SavedRoute } from '@/types/route';
 import { auth, db, googleProvider } from '@/lib/firebase';
 import { signInWithPopup, signOut, onAuthStateChanged, User } from 'firebase/auth';
 import { collection, addDoc, getDocs, deleteDoc, doc, query, where } from 'firebase/firestore';
+import { fetchCurrentLocationPoint } from '@/lib/geolocation';
 
 export default function Home() {
   // Auth State
@@ -17,33 +18,33 @@ export default function Home() {
   // Tab State
   const [activeTab, setActiveTab] = useState<'create' | 'list'>('create');
 
-  // Form State
+  // Form State initialized for Kansai / Sumoto Onsen Drive
   const [origin, setOrigin] = useState<LocationPoint>({
-    name: '東京駅',
-    lat: 35.681236,
-    lng: 139.767125,
+    name: '大阪駅',
+    lat: 34.702485,
+    lng: 135.495951,
   });
 
   const [destination, setDestination] = useState<LocationPoint>({
-    name: '箱根湯本駅',
-    lat: 35.233261,
-    lng: 139.103758,
+    name: '洲本温泉',
+    lat: 34.3411,
+    lng: 134.9015,
   });
 
   const [waypoints, setWaypoints] = useState<LocationPoint[]>([
     {
-      name: '芦ノ湖',
-      lat: 35.2012,
-      lng: 139.0123,
+      name: '明石海峡大橋',
+      lat: 34.6163,
+      lng: 135.0221,
     },
   ]);
 
   const [travelMode, setTravelMode] = useState<TravelModeType>('DRIVING');
-  const [title, setTitle] = useState<string>('箱根日帰りドライブ温泉コース');
+  const [title, setTitle] = useState<string>('大阪発 明石海峡大橋ドライブ＆洲本温泉旅');
   const [description, setDescription] = useState<string>(
-    '途中で芦ノ湖に立ち寄って美味しいランチと景色を楽しむお気に入りドライブコースです。'
+    '大阪を出発し、明石海峡大橋を渡って風光明媚な淡路島・洲本温泉へ向かう快適ドライブコースです。'
   );
-  const [tagsString, setTagsString] = useState<string>('ドライブ, 温泉, 休日');
+  const [tagsString, setTagsString] = useState<string>('ドライブ, 温泉, 淡路島, 明石海峡大橋');
 
   // Calculated Route Details
   const [calculatedData, setCalculatedData] = useState<{
@@ -55,6 +56,17 @@ export default function Home() {
   // Saved Routes List
   const [savedRoutes, setSavedRoutes] = useState<SavedRoute[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Auto-fetch GPS Current Location on mount
+  useEffect(() => {
+    fetchCurrentLocationPoint()
+      .then((loc) => {
+        setOrigin(loc);
+      })
+      .catch((e) => {
+        console.log('Using default Osaka Station origin', e);
+      });
+  }, []);
 
   // Listen to Auth State
   useEffect(() => {
@@ -94,20 +106,20 @@ export default function Home() {
         console.error(err);
       }
     } else {
-      // Default Initial Demo Item
+      // Default Initial Demo Item (Sumoto Onsen)
       const demoRoutes: SavedRoute[] = [
         {
-          id: 'demo-1',
+          id: 'demo-kansai-1',
           userId: 'demo-user',
-          title: '箱根日帰り温泉ドライブ',
-          description: '芦ノ湖でのランチと温泉を楽しむおすすめドライブコース',
-          tags: ['ドライブ', '温泉', '休日'],
-          origin: { name: '東京駅', lat: 35.681236, lng: 139.767125 },
-          destination: { name: '箱根湯本駅', lat: 35.233261, lng: 139.103758 },
-          waypoints: [{ name: '芦ノ湖', lat: 35.2012, lng: 139.0123 }],
+          title: '大阪発 明石海峡大橋ドライブ＆洲本温泉旅',
+          description: '明石海峡大橋を渡り、淡路島・洲本温泉でゆったり海を眺める温泉旅コース',
+          tags: ['ドライブ', '温泉', '淡路島', '明石海峡大橋'],
+          origin: { name: '大阪駅', lat: 34.702485, lng: 135.495951 },
+          destination: { name: '洲本温泉', lat: 34.3411, lng: 134.9015 },
+          waypoints: [{ name: '明石海峡大橋', lat: 34.6163, lng: 135.0221 }],
           travelMode: 'DRIVING',
-          distanceMeters: 98500,
-          durationSeconds: 6300,
+          distanceMeters: 105000,
+          durationSeconds: 7800,
           createdAt: new Date().toISOString(),
         },
       ];
@@ -151,7 +163,7 @@ export default function Home() {
       alert('出発地と目的地を入力してください。');
       return;
     }
-    alert(`ルートを再計算しました: ${origin.name} → ${destination.name}`);
+    alert(`ルートを計算・描画しました: ${origin.name} → ${destination.name}`);
   };
 
   // Save Route
@@ -177,8 +189,8 @@ export default function Home() {
       waypoints,
       travelMode,
       encodedPolyline: calculatedData?.encodedPolyline || 'demo_polyline',
-      distanceMeters: calculatedData?.distanceMeters || 98500,
-      durationSeconds: calculatedData?.durationSeconds || 6300,
+      distanceMeters: calculatedData?.distanceMeters || 105000,
+      durationSeconds: calculatedData?.durationSeconds || 7800,
       createdAt: new Date().toISOString(),
     };
 
@@ -242,8 +254,8 @@ export default function Home() {
     waypoints,
     travelMode,
     encodedPolyline: calculatedData?.encodedPolyline || 'demo_polyline',
-    distanceMeters: calculatedData?.distanceMeters || 98500,
-    durationSeconds: calculatedData?.durationSeconds || 6300,
+    distanceMeters: calculatedData?.distanceMeters || 105000,
+    durationSeconds: calculatedData?.durationSeconds || 7800,
   };
 
   return (

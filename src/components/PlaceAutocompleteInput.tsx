@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { MapPin, Search } from 'lucide-react';
+import { MapPin, Navigation, Loader2 } from 'lucide-react';
 import { LocationPoint } from '@/types/route';
+import { fetchCurrentLocationPoint } from '@/lib/geolocation';
 
 interface PlaceAutocompleteInputProps {
   value: string;
@@ -11,20 +12,18 @@ interface PlaceAutocompleteInputProps {
   className?: string;
   badgeLabel?: string;
   badgeColorClass?: string;
+  showLocationButton?: boolean;
 }
 
-// Preset locations for demo fallback mode
+// Preset locations for Kansai / Osaka drive fallback
 const DEMO_PRESETS: { [key: string]: { lat: number; lng: number } } = {
-  東京駅: { lat: 35.681236, lng: 139.767125 },
-  箱根湯本駅: { lat: 35.233261, lng: 139.103758 },
-  芦ノ湖: { lat: 35.2012, lng: 139.0123 },
-  東京タワー: { lat: 35.658581, lng: 139.745433 },
-  富士山: { lat: 35.360626, lng: 138.727363 },
-  京都駅: { lat: 34.985849, lng: 135.758767 },
   大阪駅: { lat: 34.702485, lng: 135.495951 },
-  横浜赤レンガ倉庫: { lat: 35.452814, lng: 139.642878 },
-  鎌倉大仏: { lat: 35.316878, lng: 139.536136 },
-  草津温泉: { lat: 36.620612, lng: 138.596205 },
+  洲本温泉: { lat: 34.3411, lng: 134.9015 },
+  明石海峡大橋: { lat: 34.6163, lng: 135.0221 },
+  神戸三宮駅: { lat: 34.6946, lng: 135.1952 },
+  京都駅: { lat: 34.985849, lng: 135.758767 },
+  難波駅: { lat: 34.6656, lng: 135.5014 },
+  淡路島ハイウェイオアシス: { lat: 34.5878, lng: 135.0116 },
 };
 
 export const PlaceAutocompleteInput: React.FC<PlaceAutocompleteInputProps> = ({
@@ -34,12 +33,14 @@ export const PlaceAutocompleteInput: React.FC<PlaceAutocompleteInputProps> = ({
   className = '',
   badgeLabel,
   badgeColorClass = 'bg-blue-500/20 text-blue-400 border-blue-500/40',
+  showLocationButton = true,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<any>(null);
   const [inputText, setInputText] = useState(value || '');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
 
   useEffect(() => {
     setInputText(value || '');
@@ -54,7 +55,7 @@ export const PlaceAutocompleteInput: React.FC<PlaceAutocompleteInputProps> = ({
         inputRef.current,
         {
           types: ['geocode', 'establishment'],
-          componentRestrictions: { country: 'jp' }, // Default restrict to Japan
+          componentRestrictions: { country: 'jp' },
         }
       );
 
@@ -78,17 +79,15 @@ export const PlaceAutocompleteInput: React.FC<PlaceAutocompleteInputProps> = ({
     }
   }, []);
 
-  // Handle Input Changes & Demo Fallback Suggestions
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const text = e.target.value;
     setInputText(text);
 
-    // Update parent point with fallback lat/lng or matched preset
     const preset = DEMO_PRESETS[text];
     onChange({
       name: text,
-      lat: preset ? preset.lat : 35.681236,
-      lng: preset ? preset.lng : 139.767125,
+      lat: preset ? preset.lat : 34.702485,
+      lng: preset ? preset.lng : 135.495951,
     });
 
     if (!window.google?.maps?.places) {
@@ -110,9 +109,23 @@ export const PlaceAutocompleteInput: React.FC<PlaceAutocompleteInputProps> = ({
     setShowSuggestions(false);
     onChange({
       name: suggestion,
-      lat: preset ? preset.lat : 35.681236,
-      lng: preset ? preset.lng : 139.767125,
+      lat: preset ? preset.lat : 34.702485,
+      lng: preset ? preset.lng : 135.495951,
     });
+  };
+
+  // Fetch Current GPS Location
+  const handleFetchCurrentLocation = async () => {
+    setIsLoadingLocation(true);
+    try {
+      const point = await fetchCurrentLocationPoint();
+      setInputText(point.name);
+      onChange(point);
+    } catch (error: any) {
+      alert(error.message || '位置情報の取得に失敗しました。ブラウザの位置情報を許可してください。');
+    } finally {
+      setIsLoadingLocation(false);
+    }
   };
 
   return (
@@ -124,7 +137,8 @@ export const PlaceAutocompleteInput: React.FC<PlaceAutocompleteInputProps> = ({
           {badgeLabel}
         </div>
       )}
-      <div className="relative flex-1">
+
+      <div className="relative flex-1 flex items-center">
         <input
           ref={inputRef}
           type="text"
@@ -143,14 +157,31 @@ export const PlaceAutocompleteInput: React.FC<PlaceAutocompleteInputProps> = ({
             setTimeout(() => setShowSuggestions(false), 200);
           }}
           placeholder={placeholder}
-          className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+          className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-4 pr-10 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
         />
+
+        {/* Current Location Quick Button */}
+        {showLocationButton && (
+          <button
+            type="button"
+            onClick={handleFetchCurrentLocation}
+            disabled={isLoadingLocation}
+            title="GPSから現在地を取得"
+            className="absolute right-2 text-slate-400 hover:text-blue-400 p-1.5 rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-50"
+          >
+            {isLoadingLocation ? (
+              <Loader2 className="h-4 w-4 animate-spin text-blue-400" />
+            ) : (
+              <Navigation className="h-4 w-4 text-blue-400" />
+            )}
+          </button>
+        )}
 
         {/* Demo Autocomplete Dropdown */}
         {showSuggestions && suggestions.length > 0 && (
           <div className="absolute left-0 right-0 top-full mt-1 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl z-50 overflow-hidden">
             <div className="px-3 py-1.5 bg-slate-950 border-b border-slate-800 text-[10px] font-semibold text-slate-400 uppercase tracking-wider flex items-center justify-between">
-              <span>検索候補 (Autocomplete)</span>
+              <span>関西ドライブ候補 (Presets)</span>
               <span className="text-blue-400">Places API</span>
             </div>
             {suggestions.map((item) => (
