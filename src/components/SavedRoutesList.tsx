@@ -14,8 +14,10 @@ import {
   Footprints,
   Calendar,
   Compass,
+  Navigation,
 } from 'lucide-react';
 import { generateGPX, generateKML, downloadFile, getSmartFilename } from '@/lib/gpx-kml-exporter';
+import { generateGoogleMapsNavigationUrl } from '@/lib/google-maps-url';
 
 interface SavedRoutesListProps {
   routes: SavedRoute[];
@@ -205,51 +207,63 @@ export const SavedRoutesList: React.FC<SavedRoutesListProps> = ({
               </div>
 
               {/* Card Footer Actions */}
-              <div className="pt-3 border-t border-slate-800 flex items-center justify-between gap-2">
-                <button
-                  onClick={() => onSelectRoute(route)}
-                  className="flex-1 py-2 px-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold flex items-center justify-center space-x-1.5 transition-colors"
+              <div className="pt-3 border-t border-slate-800 space-y-2">
+                <a
+                  href={generateGoogleMapsNavigationUrl(route)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-2.5 px-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold flex items-center justify-center space-x-2 shadow-md shadow-blue-600/30 transition-all"
                 >
-                  <Compass className="h-3.5 w-3.5" />
-                  <span>マップに表示</span>
-                </button>
+                  <Navigation className="h-4 w-4" />
+                  <span>🧭 Googleマップでナビ開始</span>
+                </a>
 
-                <div className="flex items-center space-x-1">
+                <div className="flex items-center justify-between gap-2">
                   <button
-                    onClick={() => {
-                      const xml = generateGPX(route);
-                      const filename = getSmartFilename(route.title, 'gpx');
-                      downloadFile(xml, filename, 'application/gpx+xml');
-                    }}
-                    title="GPXダウンロード"
-                    className="p-2 bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded-xl border border-slate-700 transition-colors"
+                    onClick={() => onSelectRoute(route)}
+                    className="flex-1 py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold flex items-center justify-center space-x-1.5 transition-colors"
                   >
-                    <Download className="h-4 w-4" />
+                    <Compass className="h-3.5 w-3.5" />
+                    <span>マップに描画</span>
                   </button>
 
-                  <button
-                    onClick={() => {
-                      const xml = generateKML(route);
-                      const filename = getSmartFilename(route.title, 'kml');
-                      downloadFile(
-                        xml,
-                        filename,
-                        'application/vnd.google-earth.kml+xml'
-                      );
-                    }}
-                    title="KMLダウンロード"
-                    className="p-2 bg-slate-800 hover:bg-slate-700 text-blue-400 rounded-xl border border-slate-700 transition-colors"
-                  >
-                    <FileCode className="h-4 w-4" />
-                  </button>
+                  <div className="flex items-center space-x-1">
+                    <button
+                      onClick={() => {
+                        const xml = generateGPX(route);
+                        const filename = getSmartFilename(route.title, 'gpx');
+                        downloadFile(xml, filename, 'application/gpx+xml');
+                      }}
+                      title="GPXダウンロード"
+                      className="p-2 bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded-xl border border-slate-700 transition-colors"
+                    >
+                      <Download className="h-4 w-4" />
+                    </button>
 
-                  <button
-                    onClick={() => route.id && onDeleteRoute(route.id)}
-                    title="削除"
-                    className="p-2 bg-slate-800 hover:bg-slate-700 text-red-400 rounded-xl border border-slate-700 transition-colors"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                    <button
+                      onClick={() => {
+                        const xml = generateKML(route);
+                        const filename = getSmartFilename(route.title, 'kml');
+                        downloadFile(
+                          xml,
+                          filename,
+                          'application/vnd.google-earth.kml+xml'
+                        );
+                      }}
+                      title="KMLダウンロード"
+                      className="p-2 bg-slate-800 hover:bg-slate-700 text-blue-400 rounded-xl border border-slate-700 transition-colors"
+                    >
+                      <FileCode className="h-4 w-4" />
+                    </button>
+
+                    <button
+                      onClick={() => route.id && onDeleteRoute(route.id)}
+                      title="削除"
+                      className="p-2 bg-slate-800 hover:bg-slate-700 text-red-400 rounded-xl border border-slate-700 transition-colors"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

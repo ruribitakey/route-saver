@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { LocationPoint, TravelModeType, TollModeType, SavedRoute } from '@/types/route';
 import { MapPin, Navigation, Clock, Compass, Coins } from 'lucide-react';
 import { estimateJapaneseToll } from '@/lib/toll-calculator';
+import { generateGoogleMapsNavigationUrl } from '@/lib/google-maps-url';
 
 interface MapContainerProps {
   origin: LocationPoint;
@@ -34,6 +35,13 @@ export const MapContainer: React.FC<MapContainerProps> = ({
 }) => {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   const isDemoKey = !apiKey || apiKey.includes('demo');
+
+  const navigationUrl = generateGoogleMapsNavigationUrl({
+    origin,
+    destination,
+    waypoints,
+    travelMode,
+  });
 
   const [routeInfo, setRouteInfo] = useState<{
     distanceText: string;
@@ -258,6 +266,18 @@ export const MapContainer: React.FC<MapContainerProps> = ({
               </div>
             </>
           )}
+
+          {/* Launch Google Maps Navigation Button */}
+          <div className="h-6 w-px bg-slate-800" />
+          <a
+            href={navigationUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-md shadow-blue-600/30 flex items-center space-x-1.5 transition-all pointer-events-auto shrink-0"
+          >
+            <Navigation className="h-3.5 w-3.5" />
+            <span>ナビ起動</span>
+          </a>
         </div>
 
         {isDemoKey && (
