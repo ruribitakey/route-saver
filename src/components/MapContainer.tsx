@@ -11,6 +11,7 @@ interface MapContainerProps {
   travelMode: TravelModeType;
   tollMode?: TollModeType;
   maxTollAmount?: number;
+  calcTrigger?: number;
   onRouteCalculated?: (data: {
     encodedPolyline: string;
     distanceMeters: number;
@@ -26,6 +27,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   travelMode,
   tollMode = 'SMART_SAVINGS',
   maxTollAmount = 300,
+  calcTrigger = 0,
   onRouteCalculated,
   selectedRoute,
 }) => {
@@ -122,10 +124,13 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     if (origin.name && destination.name) {
       const directionsService = new window.google.maps.DirectionsService();
 
+      const originLocation = origin.lat && origin.lng ? { lat: origin.lat, lng: origin.lng } : origin.name;
+      const destinationLocation = destination.lat && destination.lng ? { lat: destination.lat, lng: destination.lng } : destination.name;
+
       const waypointsReq = waypoints
         .filter((wp) => wp.name)
         .map((wp) => ({
-          location: wp.name,
+          location: wp.lat && wp.lng ? { lat: wp.lat, lng: wp.lng } : wp.name,
           stopover: true,
         }));
 
@@ -134,8 +139,8 @@ export const MapContainer: React.FC<MapContainerProps> = ({
 
       directionsService.route(
         {
-          origin: origin.name,
-          destination: destination.name,
+          origin: originLocation,
+          destination: destinationLocation,
           waypoints: waypointsReq,
           travelMode: window.google.maps.TravelMode[travelMode] || window.google.maps.TravelMode.DRIVING,
           avoidTolls: avoidTolls,
@@ -186,7 +191,17 @@ export const MapContainer: React.FC<MapContainerProps> = ({
         }
       );
     }
-  }, [origin, destination, waypoints, travelMode, tollMode, maxTollAmount, isDemoKey, isMapLoaded]);
+  }, [
+    origin,
+    destination,
+    waypoints,
+    travelMode,
+    tollMode,
+    maxTollAmount,
+    calcTrigger,
+    isDemoKey,
+    isMapLoaded,
+  ]);
 
   return (
     <div className="relative w-full h-[600px] rounded-2xl overflow-hidden border border-slate-800 shadow-2xl bg-slate-950 flex flex-col">

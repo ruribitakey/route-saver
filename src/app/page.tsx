@@ -42,6 +42,7 @@ export default function Home() {
   const [travelMode, setTravelMode] = useState<TravelModeType>('DRIVING');
   const [tollMode, setTollMode] = useState<TollModeType>('SMART_SAVINGS');
   const [maxTollAmount, setMaxTollAmount] = useState<number>(300);
+  const [calcTrigger, setCalcTrigger] = useState<number>(0);
 
   const [title, setTitle] = useState<string>('大阪発 明石海峡大橋ドライブ＆洲本温泉旅');
   const [description, setDescription] = useState<string>(
@@ -162,13 +163,13 @@ export default function Home() {
     setUser(null);
   };
 
-  // Calculate Route
+  // Calculate Route Trigger
   const handleCalculateRoute = () => {
     if (!origin.name || !destination.name) {
       alert('出発地と目的地を入力してください。');
       return;
     }
-    alert(`ルートを計算・描画しました: ${origin.name} → ${destination.name} (${tollMode === 'SMART_SAVINGS' ? `スマート節約:${maxTollAmount}円以下` : tollMode})`);
+    setCalcTrigger((prev) => prev + 1);
   };
 
   // Save Route
@@ -250,6 +251,7 @@ export default function Home() {
     setDescription(route.description || '');
     setTagsString((route.tags || []).join(', '));
     setActiveTab('create');
+    setCalcTrigger((prev) => prev + 1);
   };
 
   // Build current route data object for exporter
@@ -322,6 +324,7 @@ export default function Home() {
                 travelMode={travelMode}
                 tollMode={tollMode}
                 maxTollAmount={maxTollAmount}
+                calcTrigger={calcTrigger}
                 onRouteCalculated={setCalculatedData}
               />
             </div>
