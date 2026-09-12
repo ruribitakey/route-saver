@@ -18,7 +18,7 @@ export default function Home() {
   // Tab State
   const [activeTab, setActiveTab] = useState<'create' | 'list'>('create');
 
-  // Form State initialized for Kansai / Sumoto Onsen Drive
+  // Form State initialized for Nagoya Station Destination
   const [origin, setOrigin] = useState<LocationPoint>({
     name: '大阪駅',
     lat: 34.702485,
@@ -26,29 +26,29 @@ export default function Home() {
   });
 
   const [destination, setDestination] = useState<LocationPoint>({
-    name: '洲本温泉',
-    lat: 34.3411,
-    lng: 134.9015,
+    name: '名古屋駅',
+    lat: 35.170915,
+    lng: 136.881537,
   });
 
   const [waypoints, setWaypoints] = useState<LocationPoint[]>([
     {
-      name: '明石海峡大橋',
-      lat: 34.6163,
-      lng: 135.0221,
+      name: '御在所サービスエリア',
+      lat: 35.0112,
+      lng: 136.5256,
     },
   ]);
 
   const [travelMode, setTravelMode] = useState<TravelModeType>('DRIVING');
-  const [tollMode, setTollMode] = useState<TollModeType>('HIGHWAY'); // Initial default to HIGHWAY (高速優先)
+  const [tollMode, setTollMode] = useState<TollModeType>('HIGHWAY'); // Default HIGHWAY (高速優先)
   const [maxTollAmount, setMaxTollAmount] = useState<number>(300);
   const [calcTrigger, setCalcTrigger] = useState<number>(0);
 
-  const [title, setTitle] = useState<string>('大阪発 明石海峡大橋ドライブ＆洲本温泉旅');
+  const [title, setTitle] = useState<string>('関西発 名古屋行きドライブ旅');
   const [description, setDescription] = useState<string>(
-    '大阪を出発し、明石海峡大橋を渡って風光明媚な淡路島・洲本温泉へ向かう快適ドライブコースです。'
+    '現在地を出発し、サービスエリアに立ち寄りながら名古屋駅を目指す快適ドライブコースです。'
   );
-  const [tagsString, setTagsString] = useState<string>('ドライブ, 温泉, 淡路島, 明石海峡大橋, 高速優先');
+  const [tagsString, setTagsString] = useState<string>('ドライブ, 名古屋駅, 観光, 高速優先');
 
   // Calculated Route Details
   const [calculatedData, setCalculatedData] = useState<{
@@ -61,7 +61,7 @@ export default function Home() {
   const [savedRoutes, setSavedRoutes] = useState<SavedRoute[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Auto-fetch GPS Current Location on mount
+  // Try fetching GPS Current Location on mount for Origin
   useEffect(() => {
     fetchCurrentLocationPoint()
       .then((loc) => {
@@ -110,22 +110,22 @@ export default function Home() {
         console.error(err);
       }
     } else {
-      // Default Initial Demo Item (Sumoto Onsen)
+      // Default Initial Demo Item (Nagoya Station Destination)
       const demoRoutes: SavedRoute[] = [
         {
-          id: 'demo-kansai-1',
+          id: 'demo-nagoya-dest-1',
           userId: 'demo-user',
-          title: '大阪発 明石海峡大橋ドライブ＆洲本温泉旅',
-          description: '明石海峡大橋を渡り、淡路島・洲本温泉でゆったり海を眺める温泉旅コース',
-          tags: ['ドライブ', '温泉', '淡路島', '明石海峡大橋', '高速優先'],
+          title: '関西発 名古屋行きドライブ旅',
+          description: '現在地を出発し、御在所SAで休憩しながら名古屋駅へ向かう快適ドライブコース',
+          tags: ['ドライブ', '名古屋駅', '観光', '高速優先'],
           origin: { name: '大阪駅', lat: 34.702485, lng: 135.495951 },
-          destination: { name: '洲本温泉', lat: 34.3411, lng: 134.9015 },
-          waypoints: [{ name: '明石海峡大橋', lat: 34.6163, lng: 135.0221 }],
+          destination: { name: '名古屋駅', lat: 35.170915, lng: 136.881537 },
+          waypoints: [{ name: '御在所サービスエリア', lat: 35.0112, lng: 136.5256 }],
           travelMode: 'DRIVING',
           tollMode: 'HIGHWAY',
           maxTollAmount: 300,
-          distanceMeters: 105000,
-          durationSeconds: 7800,
+          distanceMeters: 175000,
+          durationSeconds: 8400,
           createdAt: new Date().toISOString(),
         },
       ];
@@ -197,8 +197,8 @@ export default function Home() {
       tollMode,
       maxTollAmount,
       encodedPolyline: calculatedData?.encodedPolyline || 'demo_polyline',
-      distanceMeters: calculatedData?.distanceMeters || 105000,
-      durationSeconds: calculatedData?.durationSeconds || 7800,
+      distanceMeters: calculatedData?.distanceMeters || 175000,
+      durationSeconds: calculatedData?.durationSeconds || 8400,
       createdAt: new Date().toISOString(),
     };
 
@@ -267,8 +267,8 @@ export default function Home() {
     tollMode,
     maxTollAmount,
     encodedPolyline: calculatedData?.encodedPolyline || 'demo_polyline',
-    distanceMeters: calculatedData?.distanceMeters || 105000,
-    durationSeconds: calculatedData?.durationSeconds || 7800,
+    distanceMeters: calculatedData?.distanceMeters || 175000,
+    durationSeconds: calculatedData?.durationSeconds || 8400,
   };
 
   return (
