@@ -17,8 +17,11 @@ import {
   FileText,
   Sparkles,
   Loader2,
+  Coins,
+  Zap,
+  ShieldCheck,
 } from 'lucide-react';
-import { LocationPoint, TravelModeType, SavedRoute } from '@/types/route';
+import { LocationPoint, TravelModeType, TollModeType, SavedRoute } from '@/types/route';
 import { generateGPX, generateKML, downloadFile } from '@/lib/gpx-kml-exporter';
 import { PlaceAutocompleteInput } from '@/components/PlaceAutocompleteInput';
 import { generateRouteDescriptionWithGemini } from '@/lib/gemini';
@@ -32,6 +35,10 @@ interface RouteFormProps {
   setWaypoints: React.Dispatch<React.SetStateAction<LocationPoint[]>>;
   travelMode: TravelModeType;
   setTravelMode: (mode: TravelModeType) => void;
+  tollMode: TollModeType;
+  setTollMode: (mode: TollModeType) => void;
+  maxTollAmount: number;
+  setMaxTollAmount: (amount: number) => void;
   title: string;
   setTitle: (title: string) => void;
   description: string;
@@ -53,6 +60,10 @@ export const RouteForm: React.FC<RouteFormProps> = ({
   setWaypoints,
   travelMode,
   setTravelMode,
+  tollMode,
+  setTollMode,
+  maxTollAmount,
+  setMaxTollAmount,
   title,
   setTitle,
   description,
@@ -70,7 +81,7 @@ export const RouteForm: React.FC<RouteFormProps> = ({
   const addWaypoint = () => {
     setWaypoints((prev) => [
       ...prev,
-      { name: '', lat: 35.681236, lng: 139.767125 },
+      { name: '', lat: 34.702485, lng: 135.495951 },
     ]);
   };
 
@@ -196,13 +207,105 @@ export const RouteForm: React.FC<RouteFormProps> = ({
         </button>
       </div>
 
+      {/* Toll Road Mode 3-Way Selector */}
+      {travelMode === 'DRIVING' && (
+        <div className="space-y-2 bg-slate-950 p-3 rounded-xl border border-slate-800">
+          <div className="flex items-center justify-between text-xs font-semibold text-slate-300 mb-1">
+            <span className="flex items-center space-x-1">
+              <Coins className="h-4 w-4 text-amber-400" />
+              <span>有料道路の優先設定</span>
+            </span>
+            <span className="text-[11px] text-slate-400">
+              {tollMode === 'SMART_SAVINGS'
+                ? `格安バイパス可 (${maxTollAmount}円以下)`
+                : tollMode === 'HIGHWAY'
+                ? '全高速道路を使用'
+                : '完全一般道'}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-900 rounded-lg border border-slate-800">
+            <button
+              type="button"
+              onClick={() => setTollMode('HIGHWAY')}
+              className={`py-1.5 px-2 rounded-md text-xs font-medium flex items-center justify-center space-x-1 transition-all ${
+                tollMode === 'HIGHWAY'
+                  ? 'bg-slate-700 text-white shadow-sm font-bold'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Zap className="h-3.5 w-3.5 text-amber-400" />
+              <span>高速優先</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setTollMode('SMART_SAVINGS')}
+              className={`py-1.5 px-2 rounded-md text-xs font-medium flex items-center justify-center space-x-1 transition-all ${
+                tollMode === 'SMART_SAVINGS'
+                  ? 'bg-emerald-600 text-white shadow-sm font-bold'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Coins className="h-3.5 w-3.5 text-emerald-300" />
+              <span>スマート節約</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setTollMode('FREE_ROADS')}
+              className={`py-1.5 px-2 rounded-md text-xs font-medium flex items-center justify-center space-x-1 transition-all ${
+                tollMode === 'FREE_ROADS'
+                  ? 'bg-blue-600 text-white shadow-sm font-bold'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <ShieldCheck className="h-3.5 w-3.5 text-blue-300" />
+              <span>完全一般道</span>
+            </button>
+          </div>
+
+          {/* Smart Savings Max Toll Threshold Selector */}
+          {tollMode === 'SMART_SAVINGS' && (
+            <div className="pt-2 flex items-center justify-between border-t border-slate-800/80">
+              <span className="text-[11px] text-slate-400">許容区間料金上限:</span>
+              <div className="flex items-center space-x-1.5">
+                {[100, 300, 500].map((amt) => (
+                  <button
+                    key={amt}
+                    type="button"
+                    onClick={() => setMaxTollAmount(amt)}
+                    className={`px-2.5 py-0.5 rounded-md text-xs font-medium transition-all ${
+                      maxTollAmount === amt
+                        ? 'bg-emerald-500 text-slate-950 font-bold'
+                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                    }`}
+                  >
+                    {amt}円
+                  </button>
+                ))}
+                <div className="flex items-center space-x-1 bg-slate-900 border border-slate-700 px-2 py-0.5 rounded-md text-xs">
+                  <input
+                    type="number"
+                    value={maxTollAmount}
+                    onChange={(e) => setMaxTollAmount(Number(e.target.value) || 0)}
+                    className="w-12 bg-transparent text-right font-bold text-emerald-400 focus:outline-none"
+                  />
+                  <span className="text-[11px] text-slate-400">円</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Origin, Waypoints, Destination Inputs with Places Autocomplete */}
       <div className="space-y-3">
         {/* Origin */}
         <PlaceAutocompleteInput
           value={origin.name}
           onChange={setOrigin}
-          placeholder="出発地を検索・選択 (例: 東京駅)"
+          placeholder="出発地を検索・選択 (例: 大阪駅)"
           badgeLabel="発"
           badgeColorClass="bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
         />
@@ -213,7 +316,7 @@ export const RouteForm: React.FC<RouteFormProps> = ({
             <PlaceAutocompleteInput
               value={wp.name}
               onChange={(pt) => updateWaypointPoint(idx, pt)}
-              placeholder={`経由地 ${idx + 1} を検索・選択 (例: 芦ノ湖)`}
+              placeholder={`経由地 ${idx + 1} を検索・選択 (例: 明石海峡大橋)`}
               badgeLabel={`経${idx + 1}`}
               badgeColorClass="bg-amber-500/20 text-amber-400 border-amber-500/40"
             />
@@ -259,7 +362,7 @@ export const RouteForm: React.FC<RouteFormProps> = ({
         <PlaceAutocompleteInput
           value={destination.name}
           onChange={setDestination}
-          placeholder="目的地を検索・選択 (例: 箱根湯本駅)"
+          placeholder="目的地を検索・選択 (例: 洲本温泉)"
           badgeLabel="着"
           badgeColorClass="bg-rose-500/20 text-rose-400 border-rose-500/40"
         />
@@ -303,7 +406,7 @@ export const RouteForm: React.FC<RouteFormProps> = ({
           <label className="block text-xs font-medium text-slate-400 mb-1">ルートのタイトル</label>
           <input
             type="text"
-            placeholder="例: 箱根温泉日帰りドライブ"
+            placeholder="例: 大阪発 明石海峡大橋ドライブ＆洲本温泉旅"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
@@ -328,7 +431,7 @@ export const RouteForm: React.FC<RouteFormProps> = ({
           </label>
           <input
             type="text"
-            placeholder="例: ドライブ, 温泉, 週末"
+            placeholder="例: ドライブ, 温泉, 淡路島"
             value={tagsString}
             onChange={(e) => setTagsString(e.target.value)}
             className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"

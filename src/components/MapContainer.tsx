@@ -1,14 +1,16 @@
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
-import { LocationPoint, TravelModeType, SavedRoute } from '@/types/route';
-import { MapPin, Navigation, Clock, Compass } from 'lucide-react';
+import { LocationPoint, TravelModeType, TollModeType, SavedRoute } from '@/types/route';
+import { MapPin, Navigation, Clock, Compass, Coins } from 'lucide-react';
 
 interface MapContainerProps {
   origin: LocationPoint;
   destination: LocationPoint;
   waypoints: LocationPoint[];
   travelMode: TravelModeType;
+  tollMode?: TollModeType;
+  maxTollAmount?: number;
   onRouteCalculated?: (data: {
     encodedPolyline: string;
     distanceMeters: number;
@@ -22,6 +24,8 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   destination,
   waypoints,
   travelMode,
+  tollMode = 'SMART_SAVINGS',
+  maxTollAmount = 300,
   onRouteCalculated,
   selectedRoute,
 }) => {
@@ -31,6 +35,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   const [routeInfo, setRouteInfo] = useState<{
     distanceText: string;
     durationText: string;
+    estimatedTollText?: string;
   } | null>(null);
 
   const [isMapLoaded, setIsMapLoaded] = useState(false);
@@ -39,7 +44,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   const googleMapRef = useRef<any>(null);
   const directionsRendererRef = useRef<any>(null);
 
-  // Dynamically load Google Maps JS SDK script tag with loading=async
+  // Dynamically load Google Maps JS SDK script tag
   useEffect(() => {
     if (isDemoKey || typeof window === 'undefined') return;
 
@@ -66,12 +71,12 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     }
   }, [apiKey, isDemoKey]);
 
-  // Initialize Map object once script is loaded and ref is ready
+  // Initialize Map object
   useEffect(() => {
     if (!isMapLoaded || !window.google?.maps || !mapRef.current) return;
 
     if (!googleMapRef.current) {
-      const center = { lat: origin.lat || 35.681236, lng: origin.lng || 139.767125 };
+      const center = { lat: origin.lat || 34.702485, lng: origin.lng || 135.495951 };
       googleMapRef.current = new window.google.maps.Map(mapRef.current, {
         center,
         zoom: 10,
@@ -84,19 +89,28 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     }
   }, [isMapLoaded, origin.lat, origin.lng]);
 
-  // Calculate route when points change
+  // Calculate route considering Toll Mode and Max Toll Threshold
   useEffect(() => {
     if (isDemoKey || !window.google?.maps) {
       if (origin.name && destination.name) {
+        const estToll =
+          tollMode === 'SMART_SAVINGS'
+            ? `約 210 円 (${maxTollAmount}円以下パス許可)`
+            : tollMode === 'HIGHWAY'
+            ? '約 1,820 円'
+            : '0 円 (一般道)';
+
         setRouteInfo({
-          distanceText: '約 98.5 km',
-          durationText: '約 1時間 45分',
+          distanceText: '約 105.0 km',
+          durationText: '約 1時間 50分',
+          estimatedTollText: estToll,
         });
+
         if (onRouteCalculated) {
           onRouteCalculated({
             encodedPolyline: 'a~l~Ffs~vO_@_@...demo_polyline',
-            distanceMeters: 98500,
-            durationSeconds: 6300,
+            distanceMeters: 105000,
+            durationSeconds: 6600,
           });
         }
       }
@@ -115,12 +129,17 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           stopover: true,
         }));
 
+      // Toll avoidance strategy
+      const avoidTolls = tollMode === 'FREE_ROADS' || (tollMode === 'SMART_SAVINGS' && maxTollAmount < 150);
+
       directionsService.route(
         {
           origin: origin.name,
           destination: destination.name,
           waypoints: waypointsReq,
           travelMode: window.google.maps.TravelMode[travelMode] || window.google.maps.TravelMode.DRIVING,
+          avoidTolls: avoidTolls,
+          avoidHighways: avoidTolls,
         },
         (result: any, status: any) => {
           if (status === 'OK' && result) {
@@ -140,9 +159,17 @@ export const MapContainer: React.FC<MapContainerProps> = ({
               const remMins = mins % 60;
               const durationStr = hrs > 0 ? `${hrs}時間 ${remMins}分` : `${mins}分`;
 
+              const estTollText =
+                tollMode === 'SMART_SAVINGS'
+                  ? `格安バイパス優先 (${maxTollAmount}円以下)`
+                  : tollMode === 'HIGHWAY'
+                  ? '全有料道路許可'
+                  : '0円 (完全一般道)';
+
               setRouteInfo({
                 distanceText: `${km} km`,
                 durationText: durationStr,
+                estimatedTollText: estTollText,
               });
 
               if (onRouteCalculated) {
@@ -159,13 +186,13 @@ export const MapContainer: React.FC<MapContainerProps> = ({
         }
       );
     }
-  }, [origin, destination, waypoints, travelMode, isDemoKey, isMapLoaded]);
+  }, [origin, destination, waypoints, travelMode, tollMode, maxTollAmount, isDemoKey, isMapLoaded]);
 
   return (
     <div className="relative w-full h-[600px] rounded-2xl overflow-hidden border border-slate-800 shadow-2xl bg-slate-950 flex flex-col">
       {/* Route Info Overlay Bar */}
       <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between pointer-events-none">
-        <div className="bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-xl px-4 py-2.5 shadow-xl text-white flex items-center space-x-6 pointer-events-auto">
+        <div className="bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-xl px-4 py-2.5 shadow-xl text-white flex items-center space-x-5 pointer-events-auto">
           <div className="flex items-center space-x-2">
             <Compass className="h-5 w-5 text-blue-500" />
             <div>
@@ -175,7 +202,9 @@ export const MapContainer: React.FC<MapContainerProps> = ({
               </p>
             </div>
           </div>
+
           <div className="h-6 w-px bg-slate-800" />
+
           <div className="flex items-center space-x-2">
             <Clock className="h-5 w-5 text-amber-500" />
             <div>
@@ -185,6 +214,21 @@ export const MapContainer: React.FC<MapContainerProps> = ({
               </p>
             </div>
           </div>
+
+          {routeInfo?.estimatedTollText && (
+            <>
+              <div className="h-6 w-px bg-slate-800" />
+              <div className="flex items-center space-x-2">
+                <Coins className="h-5 w-5 text-emerald-400" />
+                <div>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">有料道路モード</p>
+                  <p className="text-xs font-bold text-emerald-300">
+                    {routeInfo.estimatedTollText}
+                  </p>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {isDemoKey && (

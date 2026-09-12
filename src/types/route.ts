@@ -7,6 +7,8 @@ export interface LocationPoint {
 
 export type TravelModeType = 'DRIVING' | 'WALKING' | 'BICYCLING' | 'TRANSIT';
 
+export type TollModeType = 'HIGHWAY' | 'SMART_SAVINGS' | 'FREE_ROADS';
+
 export interface SavedRoute {
   id?: string;
   userId: string;
@@ -17,6 +19,8 @@ export interface SavedRoute {
   destination: LocationPoint;
   waypoints: LocationPoint[];
   travelMode: TravelModeType;
+  tollMode?: TollModeType;
+  maxTollAmount?: number;
   encodedPolyline?: string;
   distanceMeters?: number;
   durationSeconds?: number;
