@@ -96,19 +96,22 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   useEffect(() => {
     if (isDemoKey || !window.google?.maps) {
       if (origin.name && destination.name) {
-        const tollEst = estimateJapaneseToll({
-          origin,
-          destination,
-          waypoints,
-          distanceMeters: 105000,
-          tollMode,
-          maxTollAmount,
-        });
+        const isDriving = travelMode === 'DRIVING';
+        const tollEst = isDriving
+          ? estimateJapaneseToll({
+              origin,
+              destination,
+              waypoints,
+              distanceMeters: 105000,
+              tollMode,
+              maxTollAmount,
+            })
+          : null;
 
         setRouteInfo({
           distanceText: '約 105.0 km',
           durationText: '約 1時間 50分',
-          estimatedTollText: tollEst.displayText,
+          estimatedTollText: tollEst?.displayText,
         });
 
         if (onRouteCalculated) {
@@ -167,19 +170,22 @@ export const MapContainer: React.FC<MapContainerProps> = ({
               const remMins = mins % 60;
               const durationStr = hrs > 0 ? `${hrs}時間 ${remMins}分` : `${mins}分`;
 
-              const tollEst = estimateJapaneseToll({
-                origin,
-                destination,
-                waypoints,
-                distanceMeters: totalDistance,
-                tollMode,
-                maxTollAmount,
-              });
+              const isDriving = travelMode === 'DRIVING';
+              const tollEst = isDriving
+                ? estimateJapaneseToll({
+                    origin,
+                    destination,
+                    waypoints,
+                    distanceMeters: totalDistance,
+                    tollMode,
+                    maxTollAmount,
+                  })
+                : null;
 
               setRouteInfo({
                 distanceText: `${km} km`,
                 durationText: durationStr,
-                estimatedTollText: tollEst.displayText,
+                estimatedTollText: tollEst?.displayText,
               });
 
               if (onRouteCalculated) {
@@ -237,8 +243,8 @@ export const MapContainer: React.FC<MapContainerProps> = ({
             </div>
           </div>
 
-          {/* Toll Cost / Mode (Placed right next to duration!) */}
-          {routeInfo?.estimatedTollText && (
+          {/* Toll Cost / Mode (Placed right next to duration! Only displayed for DRIVING travel mode) */}
+          {travelMode === 'DRIVING' && routeInfo?.estimatedTollText && (
             <>
               <div className="h-6 w-px bg-slate-800" />
               <div className="flex items-center space-x-2">

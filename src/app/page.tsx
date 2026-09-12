@@ -310,7 +310,6 @@ export default function Home() {
                 setTagsString={setTagsString}
                 onCalculateRoute={handleCalculateRoute}
                 onSaveRoute={handleSaveRoute}
-                currentRouteData={currentRouteData}
                 isSaving={isSaving}
               />
             </div>

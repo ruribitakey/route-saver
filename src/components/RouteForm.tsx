@@ -11,8 +11,6 @@ import {
   Bike,
   Footprints,
   Save,
-  Download,
-  FileCode,
   Tag,
   FileText,
   Sparkles,
@@ -21,8 +19,7 @@ import {
   Zap,
   ShieldCheck,
 } from 'lucide-react';
-import { LocationPoint, TravelModeType, TollModeType, SavedRoute } from '@/types/route';
-import { generateGPX, generateKML, downloadFile } from '@/lib/gpx-kml-exporter';
+import { LocationPoint, TravelModeType, TollModeType } from '@/types/route';
 import { PlaceAutocompleteInput } from '@/components/PlaceAutocompleteInput';
 import { generateRouteDescriptionWithGemini } from '@/lib/gemini';
 
@@ -47,7 +44,6 @@ interface RouteFormProps {
   setTagsString: (tags: string) => void;
   onCalculateRoute: () => void;
   onSaveRoute: () => void;
-  currentRouteData: SavedRoute | null;
   isSaving: boolean;
 }
 
@@ -72,7 +68,6 @@ export const RouteForm: React.FC<RouteFormProps> = ({
   setTagsString,
   onCalculateRoute,
   onSaveRoute,
-  currentRouteData,
   isSaving,
 }) => {
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
@@ -133,26 +128,6 @@ export const RouteForm: React.FC<RouteFormProps> = ({
     } finally {
       setIsGeneratingAI(false);
     }
-  };
-
-  const handleExportGPX = () => {
-    if (!currentRouteData) {
-      alert('先にルートを検索・作成してください。');
-      return;
-    }
-    const xml = generateGPX(currentRouteData);
-    const safeTitle = (title || 'route').replace(/[^a-zA-Z0-9_-]/g, '_');
-    downloadFile(xml, `${safeTitle}.gpx`, 'application/gpx+xml');
-  };
-
-  const handleExportKML = () => {
-    if (!currentRouteData) {
-      alert('先にルートを検索・作成してください。');
-      return;
-    }
-    const xml = generateKML(currentRouteData);
-    const safeTitle = (title || 'route').replace(/[^a-zA-Z0-9_-]/g, '_');
-    downloadFile(xml, `${safeTitle}.kml`, 'application/vnd.google-earth.kml+xml');
   };
 
   return (
@@ -449,27 +424,9 @@ export const RouteForm: React.FC<RouteFormProps> = ({
             <Save className="h-4 w-4" />
             <span>{isSaving ? '保存中...' : 'クラウドにルートを保存'}</span>
           </button>
-
-          <div className="grid grid-cols-2 gap-2 pt-1">
-            <button
-              type="button"
-              onClick={handleExportGPX}
-              className="py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-medium flex items-center justify-center space-x-1.5 transition-colors"
-            >
-              <Download className="h-3.5 w-3.5 text-emerald-400" />
-              <span>GPXを出力</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleExportKML}
-              className="py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-medium flex items-center justify-center space-x-1.5 transition-colors"
-            >
-              <FileCode className="h-3.5 w-3.5 text-blue-400" />
-              <span>KMLを出力</span>
-            </button>
-          </div>
         </div>
       </div>
     </div>
   );
 };
+
