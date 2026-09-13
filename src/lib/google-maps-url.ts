@@ -43,7 +43,7 @@ export function generateGoogleMapsNavigationUrl(params: {
   const mode = modeMap[params.travelMode || 'DRIVING'] || 'driving';
   url += `&travelmode=${mode}`;
 
-  if (params.tollMode === 'FREE_ROADS') {
+  if ((params.travelMode || 'DRIVING') === 'DRIVING' && params.tollMode === 'FREE_ROADS') {
     url += `&avoid=tolls|highways`;
   }
 

@@ -151,9 +151,9 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           stopover: true,
         }));
 
-      // Toll avoidance strategy (Strictly respect FREE_ROADS regardless of night mode, or low toll cap)
-      const avoidTolls = tollMode === 'FREE_ROADS' || (tollMode === 'SMART_SAVINGS' && maxTollAmount < 150);
-      const avoidHighways = tollMode === 'FREE_ROADS';
+      // Toll avoidance strategy (Strictly respect FREE_ROADS for DRIVING mode)
+      const avoidTolls = travelMode === 'DRIVING' && (tollMode === 'FREE_ROADS' || (tollMode === 'SMART_SAVINGS' && maxTollAmount < 150));
+      const avoidHighways = travelMode === 'DRIVING' && tollMode === 'FREE_ROADS';
 
       directionsService.route(
         {
@@ -162,7 +162,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           waypoints: waypointsReq,
           travelMode: window.google.maps.TravelMode[travelMode] || window.google.maps.TravelMode.DRIVING,
           avoidTolls: avoidTolls,
-          avoidHighways: avoidTolls,
+          avoidHighways: avoidHighways,
         },
         (result: any, status: any) => {
           if (status === 'OK' && result) {
@@ -273,7 +273,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           )}
 
           {/* Night Safe Badge */}
-          {isNightSafeMode && (
+          {travelMode === 'DRIVING' && isNightSafeMode && (
             <>
               <div className="h-6 w-px bg-slate-800" />
               <div className="flex items-center space-x-1.5 bg-indigo-900/60 border border-indigo-500/40 px-2.5 py-1 rounded-lg text-indigo-300">

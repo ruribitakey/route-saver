@@ -162,14 +162,22 @@ export default function Home() {
     setUser(null);
   };
 
-  // Calculate Route Trigger (Auto-invokes Gemini AI when isNightSafeMode is active)
+  const handleTravelModeChange = (mode: TravelModeType) => {
+    setTravelMode(mode);
+    if (mode !== 'DRIVING') {
+      // Clear waypoints when switching to Walking/Bicycle so highway IC/SA waypoints aren't kept
+      setWaypoints([]);
+    }
+  };
+
+  // Calculate Route Trigger (Auto-invokes Gemini AI when isNightSafeMode is active for DRIVING mode)
   const handleCalculateRoute = async () => {
     if (!origin.name || !destination.name) {
       alert('出発地と目的地を入力してください。');
       return;
     }
 
-    if (isNightSafeMode) {
+    if (isNightSafeMode && travelMode === 'DRIVING') {
       setIsAnalyzingNightRoute(true);
       try {
         const aiWaypoints = await suggestNightSafeWaypointsWithGemini(
@@ -306,7 +314,7 @@ export default function Home() {
                 waypoints={waypoints}
                 setWaypoints={setWaypoints}
                 travelMode={travelMode}
-                setTravelMode={setTravelMode}
+                setTravelMode={handleTravelModeChange}
                 tollMode={tollMode}
                 setTollMode={setTollMode}
                 maxTollAmount={maxTollAmount}
