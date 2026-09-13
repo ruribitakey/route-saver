@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { LocationPoint, TravelModeType, TollModeType, SavedRoute } from '@/types/route';
-import { MapPin, Navigation, Clock, Compass, Coins } from 'lucide-react';
+import { MapPin, Navigation, Clock, Compass, Coins, Moon } from 'lucide-react';
 import { estimateJapaneseToll } from '@/lib/toll-calculator';
 import { generateGoogleMapsNavigationUrl } from '@/lib/google-maps-url';
 
@@ -13,6 +13,7 @@ interface MapContainerProps {
   travelMode: TravelModeType;
   tollMode?: TollModeType;
   maxTollAmount?: number;
+  isNightSafeMode?: boolean;
   calcTrigger?: number;
   onRouteCalculated?: (data: {
     encodedPolyline: string;
@@ -29,6 +30,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   travelMode,
   tollMode = 'HIGHWAY',
   maxTollAmount = 300,
+  isNightSafeMode = false,
   calcTrigger = 0,
   onRouteCalculated,
   selectedRoute,
@@ -100,7 +102,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     }
   }, [isMapLoaded, origin.lat, origin.lng]);
 
-  // Calculate route considering Toll Mode, Max Toll Threshold, and Yen Toll Estimation
+  // Calculate route considering Toll Mode, Max Toll Threshold, Night Safe Mode, and Yen Toll Estimation
   useEffect(() => {
     if (isDemoKey || !window.google?.maps) {
       if (origin.name && destination.name) {
@@ -148,8 +150,8 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           stopover: true,
         }));
 
-      // Toll avoidance strategy
-      const avoidTolls = tollMode === 'FREE_ROADS' || (tollMode === 'SMART_SAVINGS' && maxTollAmount < 150);
+      // Toll avoidance strategy (If Night Safe Mode is enabled, avoid tolls ONLY if explicitly requested, otherwise prioritize major roads)
+      const avoidTolls = !isNightSafeMode && (tollMode === 'FREE_ROADS' || (tollMode === 'SMART_SAVINGS' && maxTollAmount < 150));
 
       directionsService.route(
         {
@@ -217,6 +219,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     travelMode,
     tollMode,
     maxTollAmount,
+    isNightSafeMode,
     calcTrigger,
     isDemoKey,
     isMapLoaded,
@@ -251,7 +254,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
             </div>
           </div>
 
-          {/* Toll Cost / Mode (Placed right next to duration! Only displayed for DRIVING travel mode) */}
+          {/* Toll Cost / Mode */}
           {travelMode === 'DRIVING' && routeInfo?.estimatedTollText && (
             <>
               <div className="h-6 w-px bg-slate-800" />
@@ -263,6 +266,17 @@ export const MapContainer: React.FC<MapContainerProps> = ({
                     {routeInfo.estimatedTollText}
                   </p>
                 </div>
+              </div>
+            </>
+          )}
+
+          {/* Night Safe Badge */}
+          {isNightSafeMode && (
+            <>
+              <div className="h-6 w-px bg-slate-800" />
+              <div className="flex items-center space-x-1.5 bg-indigo-900/60 border border-indigo-500/40 px-2.5 py-1 rounded-lg text-indigo-300">
+                <Moon className="h-4 w-4 text-indigo-400" />
+                <span className="text-xs font-bold">夜間安心優先</span>
               </div>
             </>
           )}

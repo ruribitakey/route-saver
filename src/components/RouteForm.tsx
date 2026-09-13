@@ -18,10 +18,13 @@ import {
   Coins,
   Zap,
   ShieldCheck,
+  Moon,
+  Store,
 } from 'lucide-react';
 import { LocationPoint, TravelModeType, TollModeType } from '@/types/route';
 import { PlaceAutocompleteInput } from '@/components/PlaceAutocompleteInput';
 import { generateRouteDescriptionWithGemini } from '@/lib/gemini';
+import { NIGHT_SAFE_SPOTS } from '@/lib/night-spots-db';
 
 interface RouteFormProps {
   origin: LocationPoint;
@@ -36,6 +39,8 @@ interface RouteFormProps {
   setTollMode: (mode: TollModeType) => void;
   maxTollAmount: number;
   setMaxTollAmount: (amount: number) => void;
+  isNightSafeMode: boolean;
+  setIsNightSafeMode: (val: boolean) => void;
   title: string;
   setTitle: (title: string) => void;
   description: string;
@@ -60,6 +65,8 @@ export const RouteForm: React.FC<RouteFormProps> = ({
   setTollMode,
   maxTollAmount,
   setMaxTollAmount,
+  isNightSafeMode,
+  setIsNightSafeMode,
   title,
   setTitle,
   description,
@@ -184,93 +191,146 @@ export const RouteForm: React.FC<RouteFormProps> = ({
 
       {/* Toll Road Mode 3-Way Selector */}
       {travelMode === 'DRIVING' && (
-        <div className="space-y-2 bg-slate-950 p-3 rounded-xl border border-slate-800">
-          <div className="flex items-center justify-between text-xs font-semibold text-slate-300 mb-1">
-            <span className="flex items-center space-x-1">
-              <Coins className="h-4 w-4 text-amber-400" />
-              <span>有料道路の優先設定</span>
-            </span>
-            <span className="text-[11px] text-slate-400">
-              {tollMode === 'SMART_SAVINGS'
-                ? `格安バイパス可 (${maxTollAmount}円以下)`
-                : tollMode === 'HIGHWAY'
-                ? '全高速道路を使用'
-                : '完全一般道'}
-            </span>
-          </div>
+        <div className="space-y-3">
+          <div className="space-y-2 bg-slate-950 p-3 rounded-xl border border-slate-800">
+            <div className="flex items-center justify-between text-xs font-semibold text-slate-300 mb-1">
+              <span className="flex items-center space-x-1">
+                <Coins className="h-4 w-4 text-amber-400" />
+                <span>有料道路の優先設定</span>
+              </span>
+              <span className="text-[11px] text-slate-400">
+                {tollMode === 'SMART_SAVINGS'
+                  ? `格安バイパス可 (${maxTollAmount}円以下)`
+                  : tollMode === 'HIGHWAY'
+                  ? '全高速道路を使用'
+                  : '完全一般道'}
+              </span>
+            </div>
 
-          <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-900 rounded-lg border border-slate-800">
-            <button
-              type="button"
-              onClick={() => setTollMode('HIGHWAY')}
-              className={`py-1.5 px-2 rounded-md text-xs font-medium flex items-center justify-center space-x-1 transition-all ${
-                tollMode === 'HIGHWAY'
-                  ? 'bg-slate-700 text-white shadow-sm font-bold'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Zap className="h-3.5 w-3.5 text-amber-400" />
-              <span>高速優先</span>
-            </button>
+            <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-900 rounded-lg border border-slate-800">
+              <button
+                type="button"
+                onClick={() => setTollMode('HIGHWAY')}
+                className={`py-1.5 px-2 rounded-md text-xs font-medium flex items-center justify-center space-x-1 transition-all ${
+                  tollMode === 'HIGHWAY'
+                    ? 'bg-slate-700 text-white shadow-sm font-bold'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Zap className="h-3.5 w-3.5 text-amber-400" />
+                <span>高速優先</span>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => setTollMode('SMART_SAVINGS')}
-              className={`py-1.5 px-2 rounded-md text-xs font-medium flex items-center justify-center space-x-1 transition-all ${
-                tollMode === 'SMART_SAVINGS'
-                  ? 'bg-emerald-600 text-white shadow-sm font-bold'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Coins className="h-3.5 w-3.5 text-emerald-300" />
-              <span>スマート節約</span>
-            </button>
+              <button
+                type="button"
+                onClick={() => setTollMode('SMART_SAVINGS')}
+                className={`py-1.5 px-2 rounded-md text-xs font-medium flex items-center justify-center space-x-1 transition-all ${
+                  tollMode === 'SMART_SAVINGS'
+                    ? 'bg-emerald-600 text-white shadow-sm font-bold'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Coins className="h-3.5 w-3.5 text-emerald-300" />
+                <span>スマート節約</span>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => setTollMode('FREE_ROADS')}
-              className={`py-1.5 px-2 rounded-md text-xs font-medium flex items-center justify-center space-x-1 transition-all ${
-                tollMode === 'FREE_ROADS'
-                  ? 'bg-blue-600 text-white shadow-sm font-bold'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <ShieldCheck className="h-3.5 w-3.5 text-blue-300" />
-              <span>完全一般道</span>
-            </button>
-          </div>
+              <button
+                type="button"
+                onClick={() => setTollMode('FREE_ROADS')}
+                className={`py-1.5 px-2 rounded-md text-xs font-medium flex items-center justify-center space-x-1 transition-all ${
+                  tollMode === 'FREE_ROADS'
+                    ? 'bg-blue-600 text-white shadow-sm font-bold'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <ShieldCheck className="h-3.5 w-3.5 text-blue-300" />
+                <span>完全一般道</span>
+              </button>
+            </div>
 
-          {/* Smart Savings Max Toll Threshold Selector */}
-          {tollMode === 'SMART_SAVINGS' && (
-            <div className="pt-2 flex items-center justify-between border-t border-slate-800/80">
-              <span className="text-[11px] text-slate-400">許容区間料金上限:</span>
-              <div className="flex items-center space-x-1.5">
-                {[100, 300, 500].map((amt) => (
-                  <button
-                    key={amt}
-                    type="button"
-                    onClick={() => setMaxTollAmount(amt)}
-                    className={`px-2.5 py-0.5 rounded-md text-xs font-medium transition-all ${
-                      maxTollAmount === amt
-                        ? 'bg-emerald-500 text-slate-950 font-bold'
-                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                    }`}
-                  >
-                    {amt}円
-                  </button>
-                ))}
-                <div className="flex items-center space-x-1 bg-slate-900 border border-slate-700 px-2 py-0.5 rounded-md text-xs">
-                  <input
-                    type="number"
-                    value={maxTollAmount}
-                    onChange={(e) => setMaxTollAmount(Number(e.target.value) || 0)}
-                    className="w-12 bg-transparent text-right font-bold text-emerald-400 focus:outline-none"
-                  />
-                  <span className="text-[11px] text-slate-400">円</span>
+            {/* Smart Savings Max Toll Threshold Selector */}
+            {tollMode === 'SMART_SAVINGS' && (
+              <div className="pt-2 flex items-center justify-between border-t border-slate-800/80">
+                <span className="text-[11px] text-slate-400">許容区間料金上限:</span>
+                <div className="flex items-center space-x-1.5">
+                  {[100, 300, 500].map((amt) => (
+                    <button
+                      key={amt}
+                      type="button"
+                      onClick={() => setMaxTollAmount(amt)}
+                      className={`px-2.5 py-0.5 rounded-md text-xs font-medium transition-all ${
+                        maxTollAmount === amt
+                          ? 'bg-emerald-500 text-slate-950 font-bold'
+                          : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                      }`}
+                    >
+                      {amt}円
+                    </button>
+                  ))}
+                  <div className="flex items-center space-x-1 bg-slate-900 border border-slate-700 px-2 py-0.5 rounded-md text-xs">
+                    <input
+                      type="number"
+                      value={maxTollAmount}
+                      onChange={(e) => setMaxTollAmount(Number(e.target.value) || 0)}
+                      className="w-12 bg-transparent text-right font-bold text-emerald-400 focus:outline-none"
+                    />
+                    <span className="text-[11px] text-slate-400">円</span>
+                  </div>
                 </div>
               </div>
+            )}
+          </div>
+
+          {/* Night Safe Drive Mode Toggle */}
+          <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <div className={`p-1.5 rounded-lg transition-all ${isNightSafeMode ? 'bg-indigo-600/30 text-indigo-400 border border-indigo-500/40' : 'bg-slate-800 text-slate-400'}`}>
+                  <Moon className="h-4 w-4" />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-slate-200">🌙 夜間安心モード</span>
+                  <p className="text-[11px] text-slate-400">細道・山道ショートカットを回避し主要幹線を優先</p>
+                </div>
+              </label>
+              <button
+                type="button"
+                onClick={() => setIsNightSafeMode(!isNightSafeMode)}
+                className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${
+                  isNightSafeMode ? 'bg-indigo-600 justify-end' : 'bg-slate-800 justify-start'
+                }`}
+              >
+                <div className="w-4 h-4 rounded-full bg-white shadow-md" />
+              </button>
             </div>
-          )}
+
+            {/* 24h Safe Spots Presets */}
+            <div className="pt-2 border-t border-slate-800/80 space-y-1.5">
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-slate-400 flex items-center space-x-1">
+                  <Store className="h-3.5 w-3.5 text-indigo-400" />
+                  <span>24h安心スポットをワンタップ追加:</span>
+                </span>
+              </div>
+              <div className="flex items-center space-x-1.5 overflow-x-auto pb-1">
+                {NIGHT_SAFE_SPOTS.slice(0, 6).map((spot) => (
+                  <button
+                    key={spot.name}
+                    type="button"
+                    onClick={() => {
+                      setWaypoints((prev) => [
+                        ...prev,
+                        { name: spot.name, lat: spot.lat, lng: spot.lng },
+                      ]);
+                    }}
+                    className="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-900 hover:bg-slate-800 text-indigo-300 border border-indigo-500/30 shrink-0 transition-colors flex items-center space-x-1"
+                  >
+                    <span>＋ {spot.name.split(' ')[0]}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -429,4 +489,3 @@ export const RouteForm: React.FC<RouteFormProps> = ({
     </div>
   );
 };
-

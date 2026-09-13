@@ -42,13 +42,14 @@ export default function Home() {
   const [travelMode, setTravelMode] = useState<TravelModeType>('DRIVING');
   const [tollMode, setTollMode] = useState<TollModeType>('HIGHWAY'); // Default HIGHWAY (高速優先)
   const [maxTollAmount, setMaxTollAmount] = useState<number>(300);
+  const [isNightSafeMode, setIsNightSafeMode] = useState<boolean>(true); // Default true for safe night driving
   const [calcTrigger, setCalcTrigger] = useState<number>(0);
 
   const [title, setTitle] = useState<string>('関西発 名古屋行きドライブ旅');
   const [description, setDescription] = useState<string>(
     '現在地を出発し、サービスエリアに立ち寄りながら名古屋駅を目指す快適ドライブコースです。'
   );
-  const [tagsString, setTagsString] = useState<string>('ドライブ, 名古屋駅, 観光, 高速優先');
+  const [tagsString, setTagsString] = useState<string>('ドライブ, 名古屋駅, 観光, 高速優先, 夜間安心');
 
   // Calculated Route Details
   const [calculatedData, setCalculatedData] = useState<{
@@ -117,13 +118,14 @@ export default function Home() {
           userId: 'demo-user',
           title: '関西発 名古屋行きドライブ旅',
           description: '現在地を出発し、御在所SAで休憩しながら名古屋駅へ向かう快適ドライブコース',
-          tags: ['ドライブ', '名古屋駅', '観光', '高速優先'],
+          tags: ['ドライブ', '名古屋駅', '観光', '高速優先', '夜間安心'],
           origin: { name: '大阪駅', lat: 34.702485, lng: 135.495951 },
           destination: { name: '名古屋駅', lat: 35.170915, lng: 136.881537 },
           waypoints: [{ name: '御在所サービスエリア', lat: 35.0112, lng: 136.5256 }],
           travelMode: 'DRIVING',
           tollMode: 'HIGHWAY',
           maxTollAmount: 300,
+          isNightSafeMode: true,
           distanceMeters: 175000,
           durationSeconds: 8400,
           createdAt: new Date().toISOString(),
@@ -196,6 +198,7 @@ export default function Home() {
       travelMode,
       tollMode,
       maxTollAmount,
+      isNightSafeMode,
       encodedPolyline: calculatedData?.encodedPolyline || 'demo_polyline',
       distanceMeters: calculatedData?.distanceMeters || 175000,
       durationSeconds: calculatedData?.durationSeconds || 8400,
@@ -247,28 +250,12 @@ export default function Home() {
     setTravelMode(route.travelMode || 'DRIVING');
     setTollMode(route.tollMode || 'HIGHWAY');
     setMaxTollAmount(route.maxTollAmount || 300);
+    setIsNightSafeMode(route.isNightSafeMode ?? true);
     setTitle(route.title);
     setDescription(route.description || '');
     setTagsString((route.tags || []).join(', '));
     setActiveTab('create');
     setCalcTrigger((prev) => prev + 1);
-  };
-
-  // Build current route data object for exporter
-  const currentRouteData: SavedRoute = {
-    userId: user ? user.uid : 'demo-user',
-    title,
-    description,
-    tags: tagsString.split(',').map((t) => t.trim()).filter(Boolean),
-    origin,
-    destination,
-    waypoints,
-    travelMode,
-    tollMode,
-    maxTollAmount,
-    encodedPolyline: calculatedData?.encodedPolyline || 'demo_polyline',
-    distanceMeters: calculatedData?.distanceMeters || 175000,
-    durationSeconds: calculatedData?.durationSeconds || 8400,
   };
 
   return (
@@ -302,6 +289,8 @@ export default function Home() {
                 setTollMode={setTollMode}
                 maxTollAmount={maxTollAmount}
                 setMaxTollAmount={setMaxTollAmount}
+                isNightSafeMode={isNightSafeMode}
+                setIsNightSafeMode={setIsNightSafeMode}
                 title={title}
                 setTitle={setTitle}
                 description={description}
@@ -323,6 +312,7 @@ export default function Home() {
                 travelMode={travelMode}
                 tollMode={tollMode}
                 maxTollAmount={maxTollAmount}
+                isNightSafeMode={isNightSafeMode}
                 calcTrigger={calcTrigger}
                 onRouteCalculated={setCalculatedData}
               />
