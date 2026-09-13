@@ -107,11 +107,22 @@ export interface GeminiNightSafeWaypoint {
 
 function getSmartFallbackNightWaypoints(
   origin: LocationPoint,
-  destination: LocationPoint
+  destination: LocationPoint,
+  tollMode: TollModeType = 'HIGHWAY'
 ): GeminiNightSafeWaypoint[] {
   const text = ((origin.name || '') + ' ' + (destination.name || '')).toLowerCase();
 
   if (text.includes('香里園') || text.includes('寝屋川') || text.includes('枚方') || text.includes('奈良')) {
+    if (tollMode === 'FREE_ROADS') {
+      return [
+        {
+          name: '清滝生駒バイパス (国道163号)',
+          lat: 34.7312,
+          lng: 135.6881,
+          reason: '完全無料・街灯の多い主要バイパス道路（生駒山地の安全ルート）',
+        },
+      ];
+    }
     return [
       {
         name: '第二阪奈道路 壱分IC',
@@ -123,6 +134,16 @@ function getSmartFallbackNightWaypoints(
   }
 
   if (text.includes('名古屋') || text.includes('三重') || text.includes('四日市')) {
+    if (tollMode === 'FREE_ROADS') {
+      return [
+        {
+          name: '名阪国道 針IC',
+          lat: 34.6192,
+          lng: 135.9619,
+          reason: '完全無料（0円）の自動車専用道路。街灯が多く夜間も走りやすい',
+        },
+      ];
+    }
     return [
       {
         name: '御在所サービスエリア',
@@ -151,7 +172,7 @@ export async function suggestNightSafeWaypointsWithGemini(
 
   if (!apiKey || apiKey.includes('demo')) {
     await new Promise((res) => setTimeout(res, 600));
-    return getSmartFallbackNightWaypoints(origin, destination);
+    return getSmartFallbackNightWaypoints(origin, destination, tollMode);
   }
 
   let modeInstruction = '';
@@ -205,6 +226,6 @@ JSONオブジェクトのみを出力してください。キーは "waypoints" 
     return parsed.waypoints || [];
   } catch (error) {
     console.warn('Gemini night waypoints suggestion failed, using smart fallback', error);
-    return getSmartFallbackNightWaypoints(origin, destination);
+    return getSmartFallbackNightWaypoints(origin, destination, tollMode);
   }
 }

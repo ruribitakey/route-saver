@@ -43,6 +43,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     destination,
     waypoints,
     travelMode,
+    tollMode,
   });
 
   const [routeInfo, setRouteInfo] = useState<{
@@ -150,8 +151,9 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           stopover: true,
         }));
 
-      // Toll avoidance strategy (If Night Safe Mode is enabled, avoid tolls ONLY if explicitly requested, otherwise prioritize major roads)
-      const avoidTolls = !isNightSafeMode && (tollMode === 'FREE_ROADS' || (tollMode === 'SMART_SAVINGS' && maxTollAmount < 150));
+      // Toll avoidance strategy (Strictly respect FREE_ROADS regardless of night mode, or low toll cap)
+      const avoidTolls = tollMode === 'FREE_ROADS' || (tollMode === 'SMART_SAVINGS' && maxTollAmount < 150);
+      const avoidHighways = tollMode === 'FREE_ROADS';
 
       directionsService.route(
         {

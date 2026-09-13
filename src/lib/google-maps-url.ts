@@ -1,4 +1,4 @@
-import { LocationPoint, TravelModeType } from '@/types/route';
+import { LocationPoint, TravelModeType, TollModeType } from '@/types/route';
 
 /**
  * Google Maps Universal Links (Navigation URL) generator
@@ -9,6 +9,7 @@ export function generateGoogleMapsNavigationUrl(params: {
   destination: LocationPoint;
   waypoints?: LocationPoint[];
   travelMode?: TravelModeType;
+  tollMode?: TollModeType;
 }): string {
   const baseUrl = 'https://www.google.com/maps/dir/?api=1';
 
@@ -41,6 +42,11 @@ export function generateGoogleMapsNavigationUrl(params: {
 
   const mode = modeMap[params.travelMode || 'DRIVING'] || 'driving';
   url += `&travelmode=${mode}`;
+
+  if (params.tollMode === 'FREE_ROADS') {
+    url += `&avoid=tolls|highways`;
+  }
+
   url += `&dir_action=navigate`;
 
   return url;

@@ -179,17 +179,12 @@ export default function Home() {
           maxTollAmount
         );
         if (aiWaypoints && aiWaypoints.length > 0) {
-          setWaypoints((prev) => {
-            const existingNames = new Set(prev.map((w) => w.name));
-            const newPoints = aiWaypoints
-              .filter((aiW) => !existingNames.has(aiW.name))
-              .map((aiW) => ({
-                name: aiW.name,
-                lat: aiW.lat,
-                lng: aiW.lng,
-              }));
-            return [...prev, ...newPoints];
-          });
+          const newPoints = aiWaypoints.map((aiW) => ({
+            name: aiW.name,
+            lat: aiW.lat,
+            lng: aiW.lng,
+          }));
+          setWaypoints(newPoints);
         }
       } catch (e) {
         console.warn('AI Night Waypoints failed', e);
