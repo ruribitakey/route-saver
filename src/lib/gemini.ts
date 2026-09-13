@@ -105,6 +105,37 @@ export interface GeminiNightSafeWaypoint {
   reason: string;
 }
 
+function getSmartFallbackNightWaypoints(
+  origin: LocationPoint,
+  destination: LocationPoint
+): GeminiNightSafeWaypoint[] {
+  const text = ((origin.name || '') + ' ' + (destination.name || '')).toLowerCase();
+
+  if (text.includes('香里園') || text.includes('寝屋川') || text.includes('枚方') || text.includes('奈良')) {
+    return [
+      {
+        name: '第二阪奈道路 壱分IC',
+        lat: 34.6853,
+        lng: 135.7001,
+        reason: '生駒トンネル経由・街灯が多く夜間も安全な主要バイパス',
+      },
+    ];
+  }
+
+  if (text.includes('名古屋') || text.includes('三重') || text.includes('四日市')) {
+    return [
+      {
+        name: '御在所サービスエリア',
+        lat: 35.0112,
+        lng: 136.5256,
+        reason: '新名神/東名阪 24h明るい大型SA・街灯あり',
+      },
+    ];
+  }
+
+  return [];
+}
+
 /**
  * Call Gemini API to recommend 1-2 major arterial waypoints (IC, major intersection, 24h SA)
  * to avoid dark narrow mountain/shortcut roads during night driving.
@@ -117,15 +148,8 @@ export async function suggestNightSafeWaypointsWithGemini(
     process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   if (!apiKey || apiKey.includes('demo')) {
-    await new Promise((res) => setTimeout(res, 800));
-    return [
-      {
-        name: '御在所サービスエリア',
-        lat: 35.0112,
-        lng: 136.5256,
-        reason: '新名神/東名阪 24h明るい大型SA・街灯あり',
-      },
-    ];
+    await new Promise((res) => setTimeout(res, 600));
+    return getSmartFallbackNightWaypoints(origin, destination);
   }
 
   const prompt = `あなたは日本の道路交通およびカーナビゲーションの専門家です。
@@ -169,15 +193,8 @@ JSONオブジェクトのみを出力してください。キーは "waypoints" 
     const parsed = JSON.parse(textResponse);
     return parsed.waypoints || [];
   } catch (error) {
-    console.warn('Gemini night waypoints suggestion failed, using default fallback', error);
-    return [
-      {
-        name: '御在所サービスエリア',
-        lat: 35.0112,
-        lng: 136.5256,
-        reason: '新名神/東名阪 24h明るい大型SA',
-      },
-    ];
+    console.warn('Gemini night waypoints suggestion failed, using smart fallback', error);
+    return getSmartFallbackNightWaypoints(origin, destination);
   }
 }
 

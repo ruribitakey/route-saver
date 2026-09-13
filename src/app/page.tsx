@@ -33,13 +33,7 @@ export default function Home() {
     lng: 136.881537,
   });
 
-  const [waypoints, setWaypoints] = useState<LocationPoint[]>([
-    {
-      name: '御在所サービスエリア',
-      lat: 35.0112,
-      lng: 136.5256,
-    },
-  ]);
+  const [waypoints, setWaypoints] = useState<LocationPoint[]>([]);
 
   const [travelMode, setTravelMode] = useState<TravelModeType>('DRIVING');
   const [tollMode, setTollMode] = useState<TollModeType>('HIGHWAY'); // Default HIGHWAY (高速優先)
