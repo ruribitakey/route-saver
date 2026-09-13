@@ -172,7 +172,12 @@ export default function Home() {
     if (isNightSafeMode) {
       setIsAnalyzingNightRoute(true);
       try {
-        const aiWaypoints = await suggestNightSafeWaypointsWithGemini(origin, destination);
+        const aiWaypoints = await suggestNightSafeWaypointsWithGemini(
+          origin,
+          destination,
+          tollMode,
+          maxTollAmount
+        );
         if (aiWaypoints && aiWaypoints.length > 0) {
           setWaypoints((prev) => {
             const existingNames = new Set(prev.map((w) => w.name));

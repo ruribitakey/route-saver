@@ -248,34 +248,32 @@ export const RouteForm: React.FC<RouteFormProps> = ({
               </button>
             </div>
 
-            {/* Smart Savings Max Toll Threshold Selector */}
+            {/* Smart Savings Max Toll Threshold Selector (3 Clean Preset Patterns) */}
             {tollMode === 'SMART_SAVINGS' && (
-              <div className="pt-2 flex items-center justify-between border-t border-slate-800/80">
-                <span className="text-[11px] text-slate-400">許容区間料金上限:</span>
-                <div className="flex items-center space-x-1.5">
-                  {[100, 300, 500].map((amt) => (
+              <div className="pt-2 space-y-1.5 border-t border-slate-800/80">
+                <div className="flex items-center justify-between text-[11px] text-slate-400">
+                  <span>許容区間料金上限設定:</span>
+                  <span className="font-bold text-emerald-400">{maxTollAmount}円以下</span>
+                </div>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {[
+                    { amt: 100, label: '100円 (超格安)' },
+                    { amt: 300, label: '300円 (標準)' },
+                    { amt: 500, label: '500円 (ワンコイン)' },
+                  ].map((preset) => (
                     <button
-                      key={amt}
+                      key={preset.amt}
                       type="button"
-                      onClick={() => setMaxTollAmount(amt)}
-                      className={`px-2.5 py-0.5 rounded-md text-xs font-medium transition-all ${
-                        maxTollAmount === amt
-                          ? 'bg-emerald-500 text-slate-950 font-bold'
-                          : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                      onClick={() => setMaxTollAmount(preset.amt)}
+                      className={`py-1.5 px-2 rounded-lg text-xs font-medium transition-all ${
+                        maxTollAmount === preset.amt
+                          ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/20'
+                          : 'bg-slate-900 text-slate-300 hover:bg-slate-800 border border-slate-800'
                       }`}
                     >
-                      {amt}円
+                      {preset.label}
                     </button>
                   ))}
-                  <div className="flex items-center space-x-1 bg-slate-900 border border-slate-700 px-2 py-0.5 rounded-md text-xs">
-                    <input
-                      type="number"
-                      value={maxTollAmount}
-                      onChange={(e) => setMaxTollAmount(Number(e.target.value) || 0)}
-                      className="w-12 bg-transparent text-right font-bold text-emerald-400 focus:outline-none"
-                    />
-                    <span className="text-[11px] text-slate-400">円</span>
-                  </div>
                 </div>
               </div>
             )}

@@ -1,4 +1,4 @@
-import { LocationPoint, TravelModeType } from '@/types/route';
+import { LocationPoint, TravelModeType, TollModeType } from '@/types/route';
 
 export interface GeminiRouteSuggestion {
   title: string;
@@ -142,7 +142,9 @@ function getSmartFallbackNightWaypoints(
  */
 export async function suggestNightSafeWaypointsWithGemini(
   origin: LocationPoint,
-  destination: LocationPoint
+  destination: LocationPoint,
+  tollMode: TollModeType = 'HIGHWAY',
+  maxTollAmount: number = 300
 ): Promise<GeminiNightSafeWaypoint[]> {
   const apiKey =
     process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -152,8 +154,17 @@ export async function suggestNightSafeWaypointsWithGemini(
     return getSmartFallbackNightWaypoints(origin, destination);
   }
 
+  let modeInstruction = '';
+  if (tollMode === 'FREE_ROADS') {
+    modeInstruction = '高速道路を使わない完全一般道ルートにおいて、街灯が少なく暗い山道・酷道・険道・狭い裏道へのショートカットを完全に遮断し、片側多車線や車線幅が広く街灯・店舗の明かりが多い【主要な国道交差点・大通りバイパスIC】';
+  } else if (tollMode === 'SMART_SAVINGS') {
+    modeInstruction = `スマート節約モード（許容区間料金上限: ${maxTollAmount}円以下）において、料金が${maxTollAmount}円以下に収まる格安バイパス（名阪国道・堺泉北有料道路・ハーバーハイウェイ等）や24時間道の駅・主要国道交差点の中から、暗い山道を回避し安く安全に走れる中継ポイント`;
+  } else {
+    modeInstruction = '高速道路・有料道路を優先するルートにおいて、深夜でも明るく休憩・給油が可能な【24時間営業の大型SA/PAまたは主要ジャンクション/IC】';
+  }
+
   const prompt = `あなたは日本の道路交通およびカーナビゲーションの専門家です。
-出発地「${origin.name}」から目的地「${destination.name}」へ向かう夜間ドライブにおいて、暗い細道・危険な山道（酷道・険道）や狭い抜け道への迂回を完全に遮断し、車線数が多く街灯の明かりが十分な主要国道交差点、主要IC、または24h大型SA/PAの中から、最も効果的な中継ポイント（経由地）を1〜2箇所選定してください。
+出発地「${origin.name}」から目的地「${destination.name}」へ向かう夜間ドライブにおいて、暗い細道・危険な山道（酷道・険道）や狭い抜け道への迂回を完全に遮断するため、${modeInstruction}の中から、最も効果的な中継ポイント（経由地）を1〜2箇所選定してください。
 
 【出力形式】
 JSONオブジェクトのみを出力してください。キーは "waypoints" です。
@@ -197,4 +208,3 @@ JSONオブジェクトのみを出力してください。キーは "waypoints" 
     return getSmartFallbackNightWaypoints(origin, destination);
   }
 }
-
