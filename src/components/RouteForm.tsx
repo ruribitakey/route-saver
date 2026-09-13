@@ -19,12 +19,10 @@ import {
   Zap,
   ShieldCheck,
   Moon,
-  Store,
 } from 'lucide-react';
 import { LocationPoint, TravelModeType, TollModeType } from '@/types/route';
 import { PlaceAutocompleteInput } from '@/components/PlaceAutocompleteInput';
 import { generateRouteDescriptionWithGemini } from '@/lib/gemini';
-import { NIGHT_SAFE_SPOTS } from '@/lib/night-spots-db';
 
 interface RouteFormProps {
   origin: LocationPoint;
@@ -41,6 +39,7 @@ interface RouteFormProps {
   setMaxTollAmount: (amount: number) => void;
   isNightSafeMode: boolean;
   setIsNightSafeMode: (val: boolean) => void;
+  isAnalyzingNightRoute?: boolean;
   title: string;
   setTitle: (title: string) => void;
   description: string;
@@ -67,6 +66,7 @@ export const RouteForm: React.FC<RouteFormProps> = ({
   setMaxTollAmount,
   isNightSafeMode,
   setIsNightSafeMode,
+  isAnalyzingNightRoute = false,
   title,
   setTitle,
   description,
@@ -189,7 +189,7 @@ export const RouteForm: React.FC<RouteFormProps> = ({
         </button>
       </div>
 
-      {/* Toll Road Mode 3-Way Selector */}
+      {/* Toll Road Mode & Night Safe Mode Selectors */}
       {travelMode === 'DRIVING' && (
         <div className="space-y-3">
           <div className="space-y-2 bg-slate-950 p-3 rounded-xl border border-slate-800">
@@ -290,7 +290,7 @@ export const RouteForm: React.FC<RouteFormProps> = ({
                 </div>
                 <div>
                   <span className="text-xs font-bold text-slate-200">🌙 夜間安心モード</span>
-                  <p className="text-[11px] text-slate-400">細道・山道ショートカットを回避し主要幹線を優先</p>
+                  <p className="text-[11px] text-slate-400">検索時にGemini AIが主要交差点・ICを自動判定し裏道をカット</p>
                 </div>
               </label>
               <button
@@ -302,33 +302,6 @@ export const RouteForm: React.FC<RouteFormProps> = ({
               >
                 <div className="w-4 h-4 rounded-full bg-white shadow-md" />
               </button>
-            </div>
-
-            {/* 24h Safe Spots Presets */}
-            <div className="pt-2 border-t border-slate-800/80 space-y-1.5">
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="text-slate-400 flex items-center space-x-1">
-                  <Store className="h-3.5 w-3.5 text-indigo-400" />
-                  <span>24h安心スポットをワンタップ追加:</span>
-                </span>
-              </div>
-              <div className="flex items-center space-x-1.5 overflow-x-auto pb-1">
-                {NIGHT_SAFE_SPOTS.slice(0, 6).map((spot) => (
-                  <button
-                    key={spot.name}
-                    type="button"
-                    onClick={() => {
-                      setWaypoints((prev) => [
-                        ...prev,
-                        { name: spot.name, lat: spot.lat, lng: spot.lng },
-                      ]);
-                    }}
-                    className="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-900 hover:bg-slate-800 text-indigo-300 border border-indigo-500/30 shrink-0 transition-colors flex items-center space-x-1"
-                  >
-                    <span>＋ {spot.name.split(' ')[0]}</span>
-                  </button>
-                ))}
-              </div>
             </div>
           </div>
         </div>
@@ -407,10 +380,20 @@ export const RouteForm: React.FC<RouteFormProps> = ({
       <button
         type="button"
         onClick={onCalculateRoute}
-        className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold text-sm shadow-lg shadow-blue-600/30 flex items-center justify-center space-x-2 transition-all"
+        disabled={isAnalyzingNightRoute}
+        className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold text-sm shadow-lg shadow-blue-600/30 flex items-center justify-center space-x-2 transition-all disabled:opacity-60"
       >
-        <Navigation className="h-4 w-4" />
-        <span>ルートを計算・描画</span>
+        {isAnalyzingNightRoute ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin text-amber-300" />
+            <span>✨ Gemini AIが安全ルート交差点を解析中...</span>
+          </>
+        ) : (
+          <>
+            <Navigation className="h-4 w-4" />
+            <span>ルートを計算・描画</span>
+          </>
+        )}
       </button>
 
       {/* Save Details & Gemini AI Section */}

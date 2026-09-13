@@ -11,6 +11,8 @@ import { signInWithPopup, signOut, onAuthStateChanged, User } from 'firebase/aut
 import { collection, addDoc, getDocs, deleteDoc, doc, query, where } from 'firebase/firestore';
 import { fetchCurrentLocationPoint } from '@/lib/geolocation';
 
+import { generateRouteDescriptionWithGemini, suggestNightSafeWaypointsWithGemini } from '@/lib/gemini';
+
 export default function Home() {
   // Auth State
   const [user, setUser] = useState<User | null>(null);
@@ -43,6 +45,7 @@ export default function Home() {
   const [tollMode, setTollMode] = useState<TollModeType>('HIGHWAY'); // Default HIGHWAY (高速優先)
   const [maxTollAmount, setMaxTollAmount] = useState<number>(300);
   const [isNightSafeMode, setIsNightSafeMode] = useState<boolean>(true); // Default true for safe night driving
+  const [isAnalyzingNightRoute, setIsAnalyzingNightRoute] = useState<boolean>(false);
   const [calcTrigger, setCalcTrigger] = useState<number>(0);
 
   const [title, setTitle] = useState<string>('関西発 名古屋行きドライブ旅');
@@ -165,12 +168,37 @@ export default function Home() {
     setUser(null);
   };
 
-  // Calculate Route Trigger
-  const handleCalculateRoute = () => {
+  // Calculate Route Trigger (Auto-invokes Gemini AI when isNightSafeMode is active)
+  const handleCalculateRoute = async () => {
     if (!origin.name || !destination.name) {
       alert('出発地と目的地を入力してください。');
       return;
     }
+
+    if (isNightSafeMode) {
+      setIsAnalyzingNightRoute(true);
+      try {
+        const aiWaypoints = await suggestNightSafeWaypointsWithGemini(origin, destination);
+        if (aiWaypoints && aiWaypoints.length > 0) {
+          setWaypoints((prev) => {
+            const existingNames = new Set(prev.map((w) => w.name));
+            const newPoints = aiWaypoints
+              .filter((aiW) => !existingNames.has(aiW.name))
+              .map((aiW) => ({
+                name: aiW.name,
+                lat: aiW.lat,
+                lng: aiW.lng,
+              }));
+            return [...prev, ...newPoints];
+          });
+        }
+      } catch (e) {
+        console.warn('AI Night Waypoints failed', e);
+      } finally {
+        setIsAnalyzingNightRoute(false);
+      }
+    }
+
     setCalcTrigger((prev) => prev + 1);
   };
 
@@ -291,6 +319,7 @@ export default function Home() {
                 setMaxTollAmount={setMaxTollAmount}
                 isNightSafeMode={isNightSafeMode}
                 setIsNightSafeMode={setIsNightSafeMode}
+                isAnalyzingNightRoute={isAnalyzingNightRoute}
                 title={title}
                 setTitle={setTitle}
                 description={description}

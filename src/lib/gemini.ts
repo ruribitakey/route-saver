@@ -97,3 +97,87 @@ JSONオブジェクトのみを出力してください。キーは "title", "de
     };
   }
 }
+
+export interface GeminiNightSafeWaypoint {
+  name: string;
+  lat: number;
+  lng: number;
+  reason: string;
+}
+
+/**
+ * Call Gemini API to recommend 1-2 major arterial waypoints (IC, major intersection, 24h SA)
+ * to avoid dark narrow mountain/shortcut roads during night driving.
+ */
+export async function suggestNightSafeWaypointsWithGemini(
+  origin: LocationPoint,
+  destination: LocationPoint
+): Promise<GeminiNightSafeWaypoint[]> {
+  const apiKey =
+    process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+  if (!apiKey || apiKey.includes('demo')) {
+    await new Promise((res) => setTimeout(res, 800));
+    return [
+      {
+        name: '御在所サービスエリア',
+        lat: 35.0112,
+        lng: 136.5256,
+        reason: '新名神/東名阪 24h明るい大型SA・街灯あり',
+      },
+    ];
+  }
+
+  const prompt = `あなたは日本の道路交通およびカーナビゲーションの専門家です。
+出発地「${origin.name}」から目的地「${destination.name}」へ向かう夜間ドライブにおいて、暗い細道・危険な山道（酷道・険道）や狭い抜け道への迂回を完全に遮断し、車線数が多く街灯の明かりが十分な主要国道交差点、主要IC、または24h大型SA/PAの中から、最も効果的な中継ポイント（経由地）を1〜2箇所選定してください。
+
+【出力形式】
+JSONオブジェクトのみを出力してください。キーは "waypoints" です。
+例:
+{
+  "waypoints": [
+    {
+      "name": "名阪国道 針IC",
+      "lat": 34.6192,
+      "lng": 135.9619,
+      "reason": "名阪国道の主要インターチェンジ。街灯が多く片側2車線で安心。"
+    }
+  ]
+}`;
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            responseMimeType: 'application/json',
+          },
+        }),
+      }
+    );
+
+    if (!response.ok) throw new Error(`Gemini API Error: ${response.statusText}`);
+
+    const data = await response.json();
+    const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const parsed = JSON.parse(textResponse);
+    return parsed.waypoints || [];
+  } catch (error) {
+    console.warn('Gemini night waypoints suggestion failed, using default fallback', error);
+    return [
+      {
+        name: '御在所サービスエリア',
+        lat: 35.0112,
+        lng: 136.5256,
+        reason: '新名神/東名阪 24h明るい大型SA',
+      },
+    ];
+  }
+}
+
