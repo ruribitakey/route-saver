@@ -83,14 +83,14 @@ export const RouteForm: React.FC<RouteFormProps> = ({
   const addWaypoint = () => {
     setWaypoints((prev) => [
       ...prev,
-      { name: '', lat: 34.702485, lng: 135.495951 },
+      { name: '', lat: 34.702485, lng: 135.495951, isAiGenerated: false },
     ]);
   };
 
   const updateWaypointPoint = (index: number, point: LocationPoint) => {
     setWaypoints((prev) => {
       const copy = [...prev];
-      copy[index] = point;
+      copy[index] = { ...point, isAiGenerated: false };
       return copy;
     });
   };
@@ -323,8 +323,12 @@ export const RouteForm: React.FC<RouteFormProps> = ({
               value={wp.name}
               onChange={(pt) => updateWaypointPoint(idx, pt)}
               placeholder={`経由地 ${idx + 1} を検索・選択 (例: 明石海峡大橋)`}
-              badgeLabel={`経${idx + 1}`}
-              badgeColorClass="bg-amber-500/20 text-amber-400 border-amber-500/40"
+              badgeLabel={wp.isAiGenerated ? '✨AI' : `経${idx + 1}`}
+              badgeColorClass={
+                wp.isAiGenerated
+                  ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40 font-bold'
+                  : 'bg-amber-500/20 text-amber-400 border-amber-500/40'
+              }
             />
             <div className="flex items-center space-x-1 shrink-0">
               <button

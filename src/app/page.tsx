@@ -38,15 +38,13 @@ export default function Home() {
   const [travelMode, setTravelMode] = useState<TravelModeType>('DRIVING');
   const [tollMode, setTollMode] = useState<TollModeType>('HIGHWAY'); // Default HIGHWAY (高速優先)
   const [maxTollAmount, setMaxTollAmount] = useState<number>(300);
-  const [isNightSafeMode, setIsNightSafeMode] = useState<boolean>(true); // Default true for safe night driving
+  const [isNightSafeMode, setIsNightSafeMode] = useState<boolean>(false); // Default OFF per user request
   const [isAnalyzingNightRoute, setIsAnalyzingNightRoute] = useState<boolean>(false);
   const [calcTrigger, setCalcTrigger] = useState<number>(0);
 
-  const [title, setTitle] = useState<string>('関西発 名古屋行きドライブ旅');
-  const [description, setDescription] = useState<string>(
-    '現在地を出発し、サービスエリアに立ち寄りながら名古屋駅を目指す快適ドライブコースです。'
-  );
-  const [tagsString, setTagsString] = useState<string>('ドライブ, 名古屋駅, 観光, 高速優先, 夜間安心');
+  const [title, setTitle] = useState<string>('');
+  const [description, setDescription] = useState<string>('');
+  const [tagsString, setTagsString] = useState<string>('');
 
   // Calculated Route Details
   const [calculatedData, setCalculatedData] = useState<{
@@ -115,14 +113,14 @@ export default function Home() {
           userId: 'demo-user',
           title: '関西発 名古屋行きドライブ旅',
           description: '現在地を出発し、御在所SAで休憩しながら名古屋駅へ向かう快適ドライブコース',
-          tags: ['ドライブ', '名古屋駅', '観光', '高速優先', '夜間安心'],
+          tags: ['ドライブ', '名古屋駅', '観光', '高速優先'],
           origin: { name: '大阪駅', lat: 34.702485, lng: 135.495951 },
           destination: { name: '名古屋駅', lat: 35.170915, lng: 136.881537 },
           waypoints: [{ name: '御在所サービスエリア', lat: 35.0112, lng: 136.5256 }],
           travelMode: 'DRIVING',
           tollMode: 'HIGHWAY',
           maxTollAmount: 300,
-          isNightSafeMode: true,
+          isNightSafeMode: false,
           distanceMeters: 175000,
           durationSeconds: 8400,
           createdAt: new Date().toISOString(),
@@ -165,8 +163,16 @@ export default function Home() {
   const handleTravelModeChange = (mode: TravelModeType) => {
     setTravelMode(mode);
     if (mode !== 'DRIVING') {
-      // Clear waypoints when switching to Walking/Bicycle so highway IC/SA waypoints aren't kept
-      setWaypoints([]);
+      // Keep user manual waypoints, remove only AI-generated night safe waypoints
+      setWaypoints((prev) => prev.filter((w) => !w.isAiGenerated));
+    }
+  };
+
+  const handleNightSafeModeChange = (val: boolean) => {
+    setIsNightSafeMode(val);
+    if (!val) {
+      // Remove only AI-generated waypoints when night safe mode is turned off
+      setWaypoints((prev) => prev.filter((w) => !w.isAiGenerated));
     }
   };
 
@@ -187,18 +193,30 @@ export default function Home() {
           maxTollAmount
         );
         if (aiWaypoints && aiWaypoints.length > 0) {
-          const newPoints = aiWaypoints.map((aiW) => ({
+          const newAiPoints: LocationPoint[] = aiWaypoints.map((aiW) => ({
             name: aiW.name,
             lat: aiW.lat,
             lng: aiW.lng,
+            isAiGenerated: true,
           }));
-          setWaypoints(newPoints);
+          setWaypoints((prev) => {
+            const userManual = prev.filter((w) => !w.isAiGenerated);
+            return [...userManual, ...newAiPoints];
+          });
+        } else {
+          setWaypoints((prev) => prev.filter((w) => !w.isAiGenerated));
         }
       } catch (e) {
         console.warn('AI Night Waypoints failed', e);
       } finally {
         setIsAnalyzingNightRoute(false);
       }
+    }
+
+    // Auto-generate title fallback if empty
+    if (!title) {
+      const modeLabel = travelMode === 'DRIVING' ? 'ドライブ' : travelMode === 'BICYCLING' ? 'サイクリング' : '徒歩';
+      setTitle(`${origin.name || '出発地'} 〜 ${destination.name || '目的地'} ${modeLabel}コース`);
     }
 
     setCalcTrigger((prev) => prev + 1);
@@ -320,7 +338,7 @@ export default function Home() {
                 maxTollAmount={maxTollAmount}
                 setMaxTollAmount={setMaxTollAmount}
                 isNightSafeMode={isNightSafeMode}
-                setIsNightSafeMode={setIsNightSafeMode}
+                setIsNightSafeMode={handleNightSafeModeChange}
                 isAnalyzingNightRoute={isAnalyzingNightRoute}
                 title={title}
                 setTitle={setTitle}

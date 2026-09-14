@@ -3,6 +3,7 @@ export interface LocationPoint {
   lat: number;
   lng: number;
   placeId?: string;
+  isAiGenerated?: boolean;
 }
 
 export type TravelModeType = 'DRIVING' | 'WALKING' | 'BICYCLING' | 'TRANSIT';
