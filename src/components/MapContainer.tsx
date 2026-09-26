@@ -23,71 +23,7 @@ interface MapContainerProps {
   selectedRoute?: SavedRoute | null;
 }
 
-const GOOGLE_MAPS_DARK_STYLE = [
-  { elementType: 'geometry', stylers: [{ color: '#0f172a' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#0f172a' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#94a3b8' }] },
-  {
-    featureType: 'administrative.locality',
-    elementType: 'labels.text.fill',
-    stylers: [{ color: '#cbd5e1' }],
-  },
-  {
-    featureType: 'poi',
-    elementType: 'labels.text.fill',
-    stylers: [{ color: '#64748b' }],
-  },
-  {
-    featureType: 'poi.park',
-    elementType: 'geometry',
-    stylers: [{ color: '#1e293b' }],
-  },
-  {
-    featureType: 'road',
-    elementType: 'geometry',
-    stylers: [{ color: '#334155' }],
-  },
-  {
-    featureType: 'road',
-    elementType: 'geometry.stroke',
-    stylers: [{ color: '#1e293b' }],
-  },
-  {
-    featureType: 'road',
-    elementType: 'labels.text.fill',
-    stylers: [{ color: '#94a3b8' }],
-  },
-  {
-    featureType: 'road.highway',
-    elementType: 'geometry',
-    stylers: [{ color: '#475569' }],
-  },
-  {
-    featureType: 'road.highway',
-    elementType: 'geometry.stroke',
-    stylers: [{ color: '#1e293b' }],
-  },
-  {
-    featureType: 'road.highway',
-    elementType: 'labels.text.fill',
-    stylers: [{ color: '#f1f5f9' }],
-  },
-  {
-    featureType: 'transit',
-    elementType: 'geometry',
-    stylers: [{ color: '#1e293b' }],
-  },
-  {
-    featureType: 'water',
-    elementType: 'geometry',
-    stylers: [{ color: '#0284c7' }],
-  },
-  {
-    featureType: 'water',
-    elementType: 'labels.text.fill',
-    stylers: [{ color: '#38bdf8' }],
-  },
-];
+
 
 export const MapContainer: React.FC<MapContainerProps> = ({
   origin,
@@ -151,7 +87,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     }
   }, [apiKey, isDemoKey]);
 
-  // Initialize Map object with dark mode styles
+  // Initialize Map object (Standard Google Maps View)
   useEffect(() => {
     if (!isMapLoaded || !window.google?.maps || !mapRef.current) return;
 
@@ -160,7 +96,6 @@ export const MapContainer: React.FC<MapContainerProps> = ({
       googleMapRef.current = new window.google.maps.Map(mapRef.current, {
         center,
         zoom: 10,
-        styles: GOOGLE_MAPS_DARK_STYLE,
         disableDefaultUI: false,
         zoomControl: true,
       });

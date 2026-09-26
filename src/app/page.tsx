@@ -196,7 +196,14 @@ export default function Home() {
     }
     setIsGeneratingPlaylist(true);
     try {
-      const res = await generateDrivePlaylistWithGemini(origin, destination, travelMode, isNightSafeMode);
+      const durationSeconds = calculatedData?.durationSeconds || 5400;
+      const res = await generateDrivePlaylistWithGemini(
+        origin,
+        destination,
+        travelMode,
+        durationSeconds,
+        isNightSafeMode
+      );
       setPlaylistTitle(res.playlistTitle);
       setPlaylistDescription(res.playlistDescription);
       setPlaylistUrl(`https://open.spotify.com/search/${encodeURIComponent(res.searchQuery)}`);

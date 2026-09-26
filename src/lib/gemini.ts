@@ -244,35 +244,44 @@ export async function generateDrivePlaylistWithGemini(
   origin: LocationPoint,
   destination: LocationPoint,
   travelMode: TravelModeType,
+  durationSeconds: number = 5400,
   isNight: boolean = false
 ): Promise<DrivePlaylistSuggestion> {
   const apiKey =
     process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
+  const mins = Math.max(15, Math.round(durationSeconds / 60));
+  const hrs = Math.floor(mins / 60);
+  const remMins = mins % 60;
+  const durationText = hrs > 0 ? `${hrs}時間${remMins > 0 ? `${remMins}分` : ''}` : `${mins}分`;
+  const estimatedSongCount = Math.round(mins / 3.8);
+
   const modeText = travelMode === 'DRIVING' ? 'ドライブ' : travelMode === 'BICYCLING' ? 'サイクリング' : '散策';
-  const defaultQuery = `${destination.name || 'ドライブ'} BGM`;
+  const defaultQuery = `ドライブ ${durationText} プレイリスト BGM`;
 
   if (!apiKey || apiKey.includes('demo')) {
     await new Promise((res) => setTimeout(res, 500));
     return {
-      playlistTitle: `${origin.name || '出発地'} ➔ ${destination.name || '目的地'} 快適${modeText}ソング`,
-      playlistDescription: `${isNight ? '夜の高速道路・街明かりに映えるChill & City Popセレクション' : '爽やかな風を感じる快適ドライビングヒッツ'}`,
+      playlistTitle: `${durationText}（全${estimatedSongCount}曲）ぴったりドライブMIX`,
+      playlistDescription: `予想所要時間 ${durationText}（${mins}分）にちょうど収まる全${estimatedSongCount}曲のBGM。目的地到着までぴったり繋がります！`,
       searchQuery: defaultQuery,
-      recommendedSongs: ['Plastic Love - 竹内まりや', 'Midnight City - M83', 'ドライブ BGM Best'],
+      recommendedSongs: [`再生時間: 約${mins}分 (全${estimatedSongCount}曲)`, 'J-POP & 洋楽ドライブヒッツ'],
     };
   }
 
-  const prompt = `あなたはドライブミュージックとプレイリストのスペシャリストです。
-出発地「${origin.name}」から目的地「${destination.name}」への${modeText}（${isNight ? '夜間' : '日中'}）に最高にフィットするおすすめ音楽プレイリストの提案をJSON形式で作成してください。
+  const prompt = `あなたはドライブミュージックとプレイリストのプロフェッショナルです。
+出発地「${origin.name}」から目的地「${destination.name}」への${modeText}予想所要時間は【約 ${durationText}（${mins}分）】です。
+
+ドライバーが目的地に着くまでちょうど曲が流れ続けるように、所要時間【${durationText} / ${mins}分（目安：約${estimatedSongCount}曲分）】にピッタリの再生時間のプレイリスト提案をJSON形式で作成してください。
 
 【出力形式】
 JSONオブジェクトのみを出力してください。キーは "playlistTitle", "playlistDescription", "searchQuery", "recommendedSongs" です。
 例:
 {
-  "playlistTitle": "湘南・江の島 海沿い爽快ドライビングヒッツ",
-  "playlistDescription": "海風と夕焼けにぴったりなAOR・シティポップと最新邦楽ヒット曲をブレンド",
-  "searchQuery": "ドライブ シティポップ AOR",
-  "recommendedSongs": ["RIDE ON TIME - 山下達郎", "エイリアンズ - キリンジ", "ナイトクルージング - サカナクション"]
+  "playlistTitle": "1時間45分にぴったり！ドライブMIX (全28曲)",
+  "playlistDescription": "予想所要時間 1時間45分（105分）にピッタリ収まる全28曲。テンポの良い邦楽・洋楽ドライブソングで目的地まで最高のドライブに！",
+  "searchQuery": "ドライブ 2時間 プレイリスト",
+  "recommendedSongs": ["再生時間: 約105分 (全28曲)", "ジャンル: 快適ドライブヒッツ"]
 }`;
 
   try {
@@ -298,18 +307,18 @@ JSONオブジェクトのみを出力してください。キーは "playlistTit
     const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     const parsed = JSON.parse(textResponse);
     return {
-      playlistTitle: parsed.playlistTitle || `${origin.name}〜${destination.name} ${modeText}BGM`,
-      playlistDescription: parsed.playlistDescription || '気分を高めるおすすめプレイリスト',
+      playlistTitle: parsed.playlistTitle || `${durationText} (${estimatedSongCount}曲) ドライブBGM`,
+      playlistDescription: parsed.playlistDescription || `所要時間 ${durationText} にぴったりのドライブプレイリスト`,
       searchQuery: parsed.searchQuery || defaultQuery,
       recommendedSongs: parsed.recommendedSongs || [],
     };
   } catch (error) {
     console.warn('Gemini playlist generation failed, fallback used', error);
     return {
-      playlistTitle: `${origin.name} ➔ ${destination.name} ${modeText}BGM`,
-      playlistDescription: '快適な音楽とともにドライブをお楽しみください。',
+      playlistTitle: `${durationText}（全${estimatedSongCount}曲）ぴったりドライブMIX`,
+      playlistDescription: `予想所要時間 ${durationText}（${mins}分）にちょうど収まるドライブBGM。`,
       searchQuery: defaultQuery,
-      recommendedSongs: ['ドライブ BGM'],
+      recommendedSongs: [`再生時間: 約${mins}分`],
     };
   }
 }
