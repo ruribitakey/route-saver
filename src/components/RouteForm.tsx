@@ -59,8 +59,6 @@ interface RouteFormProps {
   onGeneratePlaylist?: () => void;
   isGeneratingPlaylist?: boolean;
   onCreateSimpleReturnRoute?: () => void;
-  onCreateScenicReturnRoute?: () => void;
-  isGeneratingScenicReturn?: boolean;
   onCalculateRoute: () => void;
   onSaveRoute: () => void;
   isSaving: boolean;
@@ -97,8 +95,6 @@ export const RouteForm: React.FC<RouteFormProps> = ({
   onGeneratePlaylist,
   isGeneratingPlaylist = false,
   onCreateSimpleReturnRoute,
-  onCreateScenicReturnRoute,
-  isGeneratingScenicReturn = false,
   onCalculateRoute,
   onSaveRoute,
   isSaving,
@@ -397,43 +393,23 @@ export const RouteForm: React.FC<RouteFormProps> = ({
           badgeColorClass="bg-slate-800 text-rose-400 border-slate-700"
         />
 
-        {/* Return Route & Scenic Round Trip Actions */}
-        {(onCreateSimpleReturnRoute || onCreateScenicReturnRoute) && (
+        {/* Return Route Action */}
+        {onCreateSimpleReturnRoute && (
           <div className="pt-2.5 border-t border-slate-800/80 space-y-2">
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span className="font-semibold text-slate-300 flex items-center space-x-1">
                 <RotateCcw className="h-3.5 w-3.5 text-blue-400" />
-                <span>復路（帰り道）・周遊ルート作成</span>
+                <span>復路（帰り道）作成</span>
               </span>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              {onCreateSimpleReturnRoute && (
-                <button
-                  type="button"
-                  onClick={onCreateSimpleReturnRoute}
-                  className="py-2 px-2.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-xl text-xs font-semibold text-slate-200 flex items-center justify-center space-x-1.5 transition-all"
-                >
-                  <RotateCcw className="h-3.5 w-3.5 text-blue-400" />
-                  <span>反転・単純復路</span>
-                </button>
-              )}
-
-              {onCreateScenicReturnRoute && (
-                <button
-                  type="button"
-                  onClick={onCreateScenicReturnRoute}
-                  disabled={isGeneratingScenicReturn}
-                  className="py-2 px-2.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-xl text-xs font-semibold text-emerald-400 hover:text-emerald-300 flex items-center justify-center space-x-1.5 transition-all disabled:opacity-50"
-                >
-                  {isGeneratingScenicReturn ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-400" />
-                  ) : (
-                    <Sparkles className="h-3.5 w-3.5 text-amber-300" />
-                  )}
-                  <span>{isGeneratingScenicReturn ? '周遊解析中...' : '✨ 周遊・別ルート復路'}</span>
-                </button>
-              )}
-            </div>
+            <button
+              type="button"
+              onClick={onCreateSimpleReturnRoute}
+              className="w-full py-2 px-2.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-xl text-xs font-semibold text-slate-200 flex items-center justify-center space-x-1.5 transition-all"
+            >
+              <RotateCcw className="h-3.5 w-3.5 text-blue-400" />
+              <span>🔄 行き帰りを反転（復路作成）</span>
+            </button>
           </div>
         )}
       </div>
@@ -465,6 +441,9 @@ export const RouteForm: React.FC<RouteFormProps> = ({
             <h3 className="text-xs font-bold text-slate-300 flex items-center space-x-1.5">
               <Music className="h-4 w-4 text-blue-400" />
               <span>🎵 ドライブBGM プレイリスト</span>
+              <span className="bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] font-bold px-1.5 py-0.5 rounded ml-1">
+                🧪 試験中
+              </span>
             </h3>
             {onGeneratePlaylist && (
               <button
