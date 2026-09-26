@@ -22,6 +22,7 @@ import {
   Music,
   Headphones,
   ExternalLink,
+  RotateCcw,
 } from 'lucide-react';
 import { LocationPoint, TravelModeType, TollModeType } from '@/types/route';
 import { PlaceAutocompleteInput } from '@/components/PlaceAutocompleteInput';
@@ -57,6 +58,9 @@ interface RouteFormProps {
   setPlaylistUrl?: (val: string) => void;
   onGeneratePlaylist?: () => void;
   isGeneratingPlaylist?: boolean;
+  onCreateSimpleReturnRoute?: () => void;
+  onCreateScenicReturnRoute?: () => void;
+  isGeneratingScenicReturn?: boolean;
   onCalculateRoute: () => void;
   onSaveRoute: () => void;
   isSaving: boolean;
@@ -92,6 +96,9 @@ export const RouteForm: React.FC<RouteFormProps> = ({
   setPlaylistUrl,
   onGeneratePlaylist,
   isGeneratingPlaylist = false,
+  onCreateSimpleReturnRoute,
+  onCreateScenicReturnRoute,
+  isGeneratingScenicReturn = false,
   onCalculateRoute,
   onSaveRoute,
   isSaving,
@@ -389,6 +396,46 @@ export const RouteForm: React.FC<RouteFormProps> = ({
           badgeLabel="着"
           badgeColorClass="bg-slate-800 text-rose-400 border-slate-700"
         />
+
+        {/* Return Route & Scenic Round Trip Actions */}
+        {(onCreateSimpleReturnRoute || onCreateScenicReturnRoute) && (
+          <div className="pt-2.5 border-t border-slate-800/80 space-y-2">
+            <div className="flex items-center justify-between text-xs text-slate-400">
+              <span className="font-semibold text-slate-300 flex items-center space-x-1">
+                <RotateCcw className="h-3.5 w-3.5 text-blue-400" />
+                <span>復路（帰り道）・周遊ルート作成</span>
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {onCreateSimpleReturnRoute && (
+                <button
+                  type="button"
+                  onClick={onCreateSimpleReturnRoute}
+                  className="py-2 px-2.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-xl text-xs font-semibold text-slate-200 flex items-center justify-center space-x-1.5 transition-all"
+                >
+                  <RotateCcw className="h-3.5 w-3.5 text-blue-400" />
+                  <span>反転・単純復路</span>
+                </button>
+              )}
+
+              {onCreateScenicReturnRoute && (
+                <button
+                  type="button"
+                  onClick={onCreateScenicReturnRoute}
+                  disabled={isGeneratingScenicReturn}
+                  className="py-2 px-2.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-xl text-xs font-semibold text-emerald-400 hover:text-emerald-300 flex items-center justify-center space-x-1.5 transition-all disabled:opacity-50"
+                >
+                  {isGeneratingScenicReturn ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-400" />
+                  ) : (
+                    <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+                  )}
+                  <span>{isGeneratingScenicReturn ? '周遊解析中...' : '✨ 周遊・別ルート復路'}</span>
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Calculate Route Primary Action Button */}

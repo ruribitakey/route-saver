@@ -15,6 +15,7 @@ import {
   generateRouteDescriptionWithGemini,
   suggestNightSafeWaypointsWithGemini,
   generateDrivePlaylistWithGemini,
+  suggestScenicReturnWaypointsWithGemini,
 } from '@/lib/gemini';
 
 export default function Home() {
@@ -44,6 +45,7 @@ export default function Home() {
   const [maxTollAmount, setMaxTollAmount] = useState<number>(300);
   const [isNightSafeMode, setIsNightSafeMode] = useState<boolean>(false); // Default OFF per user request
   const [isAnalyzingNightRoute, setIsAnalyzingNightRoute] = useState<boolean>(false);
+  const [isGeneratingScenicReturn, setIsGeneratingScenicReturn] = useState<boolean>(false);
   const [calcTrigger, setCalcTrigger] = useState<number>(0);
 
   const [title, setTitle] = useState<string>('');
@@ -185,6 +187,64 @@ export default function Home() {
     if (!val) {
       // Remove only AI-generated waypoints when night safe mode is turned off
       setWaypoints((prev) => prev.filter((w) => !w.isAiGenerated));
+    }
+  };
+
+  // Simple Return Route (Swap Origin & Destination, reverse waypoints)
+  const handleCreateSimpleReturnRoute = () => {
+    if (!origin.name || !destination.name) {
+      alert('出発地と目的地が設定されていません。');
+      return;
+    }
+    const tempOrigin = origin;
+    const tempDest = destination;
+    setOrigin(tempDest);
+    setDestination(tempOrigin);
+
+    setWaypoints((prev) => [...prev].reverse());
+    setTitle(`${tempDest.name || '出発地'} 〜 ${tempOrigin.name || '目的地'} 復路コース`);
+    setCalcTrigger((prev) => prev + 1);
+  };
+
+  // Scenic Alternative Return Route via Gemini AI
+  const handleCreateScenicReturnRoute = async () => {
+    if (!origin.name || !destination.name) {
+      alert('出発地と目的地が設定されていません。');
+      return;
+    }
+    const newOrigin = destination;
+    const newDest = origin;
+
+    setOrigin(newOrigin);
+    setDestination(newDest);
+    setIsGeneratingScenicReturn(true);
+
+    try {
+      const scenicWaypoints = await suggestScenicReturnWaypointsWithGemini(
+        newOrigin,
+        newDest,
+        travelMode,
+        tollMode
+      );
+
+      if (scenicWaypoints && scenicWaypoints.length > 0) {
+        const newAiPoints: LocationPoint[] = scenicWaypoints.map((sw) => ({
+          name: sw.name,
+          lat: sw.lat,
+          lng: sw.lng,
+          isAiGenerated: true,
+        }));
+        setWaypoints((prev) => {
+          const userManual = prev.filter((w) => !w.isAiGenerated).reverse();
+          return [...userManual, ...newAiPoints];
+        });
+      }
+      setTitle(`${newOrigin.name || '出発地'} ➔ ${newDest.name || '目的地'} 周遊・別ルート復路`);
+    } catch (e) {
+      console.warn('Scenic return generation failed', e);
+    } finally {
+      setIsGeneratingScenicReturn(false);
+      setCalcTrigger((prev) => prev + 1);
     }
   };
 
@@ -398,6 +458,9 @@ export default function Home() {
                 setPlaylistUrl={setPlaylistUrl}
                 onGeneratePlaylist={handleGeneratePlaylist}
                 isGeneratingPlaylist={isGeneratingPlaylist}
+                onCreateSimpleReturnRoute={handleCreateSimpleReturnRoute}
+                onCreateScenicReturnRoute={handleCreateScenicReturnRoute}
+                isGeneratingScenicReturn={isGeneratingScenicReturn}
                 onCalculateRoute={handleCalculateRoute}
                 onSaveRoute={handleSaveRoute}
                 isSaving={isSaving}

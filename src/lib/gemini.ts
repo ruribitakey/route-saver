@@ -230,6 +230,84 @@ JSONオブジェクトのみを出力してください。キーは "waypoints" 
   }
 }
 
+/**
+ * Call Gemini API to recommend scenic alternative return waypoints
+ * so the drive back is not just the exact same road in reverse.
+ */
+export async function suggestScenicReturnWaypointsWithGemini(
+  origin: LocationPoint,
+  destination: LocationPoint,
+  travelMode: TravelModeType = 'DRIVING',
+  tollMode: TollModeType = 'HIGHWAY'
+): Promise<GeminiNightSafeWaypoint[]> {
+  const apiKey =
+    process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+  if (!apiKey || apiKey.includes('demo')) {
+    await new Promise((res) => setTimeout(res, 500));
+    return [
+      {
+        name: '名阪国道 針テラス',
+        lat: 34.6192,
+        lng: 135.9619,
+        reason: '復路にぴったりなドライブスポット・道の駅',
+      },
+    ];
+  }
+
+  const prompt = `あなたはドライブ・周遊ルートのスペシャリストです。
+出発地「${origin.name}」から目的地「${destination.name}」へ向かう復路（帰り道）ドライブにおいて、往路で通った道と被らない景色が美しい周遊コースや、別の主要バイパス経由地・人気の道の駅を1〜2箇所選定してください。
+
+【出力形式】
+JSONオブジェクトのみを出力してください。キーは "waypoints" です。
+例:
+{
+  "waypoints": [
+    {
+      "name": "道の駅 針テラス",
+      "lat": 34.6192,
+      "lng": 135.9619,
+      "reason": "名阪国道沿いの人気道の駅。往路とは異なる景色で復路ドライブを満喫できる中継地。"
+    }
+  ]
+}`;
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            responseMimeType: 'application/json',
+          },
+        }),
+      }
+    );
+
+    if (!response.ok) throw new Error(`Gemini API Error: ${response.statusText}`);
+
+    const data = await response.json();
+    const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const parsed = JSON.parse(textResponse);
+    return parsed.waypoints || [];
+  } catch (error) {
+    console.warn('Gemini scenic return waypoints failed, fallback used', error);
+    return [
+      {
+        name: '名阪国道 針テラス',
+        lat: 34.6192,
+        lng: 135.9619,
+        reason: '復路にぴったりなドライブスポット・道の駅',
+      },
+    ];
+  }
+}
+
 export interface DrivePlaylistSuggestion {
   playlistTitle: string;
   playlistDescription: string;
