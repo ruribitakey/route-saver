@@ -458,63 +458,65 @@ export const RouteForm: React.FC<RouteFormProps> = ({
         )}
       </button>
 
-      {/* Drive Playlist Section */}
-      <div className="border-t border-slate-800/80 pt-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xs font-bold text-slate-300 flex items-center space-x-1.5">
-            <Music className="h-4 w-4 text-blue-400" />
-            <span>🎵 ドライブBGM プレイリスト</span>
-          </h3>
-          {onGeneratePlaylist && (
-            <button
-              type="button"
-              onClick={onGeneratePlaylist}
-              disabled={isGeneratingPlaylist}
-              className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-medium flex items-center space-x-1 transition-all disabled:opacity-50"
-            >
-              {isGeneratingPlaylist ? (
-                <Loader2 className="h-3 w-3 animate-spin text-blue-400" />
-              ) : (
-                <Sparkles className="h-3 w-3 text-amber-300" />
+      {/* Drive Playlist Section (Exclusively for DRIVING mode) */}
+      {travelMode === 'DRIVING' && (
+        <div className="border-t border-slate-800/80 pt-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold text-slate-300 flex items-center space-x-1.5">
+              <Music className="h-4 w-4 text-blue-400" />
+              <span>🎵 ドライブBGM プレイリスト</span>
+            </h3>
+            {onGeneratePlaylist && (
+              <button
+                type="button"
+                onClick={onGeneratePlaylist}
+                disabled={isGeneratingPlaylist}
+                className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-medium flex items-center space-x-1 transition-all disabled:opacity-50"
+              >
+                {isGeneratingPlaylist ? (
+                  <Loader2 className="h-3 w-3 animate-spin text-blue-400" />
+                ) : (
+                  <Sparkles className="h-3 w-3 text-amber-300" />
+                )}
+                <span>{isGeneratingPlaylist ? '選曲中...' : 'AIでBGM選曲'}</span>
+              </button>
+            )}
+          </div>
+
+          {playlistTitle && (
+            <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
+              <p className="text-xs font-bold text-slate-200 flex items-center space-x-1.5">
+                <Headphones className="h-3.5 w-3.5 text-blue-400" />
+                <span>{playlistTitle}</span>
+              </p>
+              {playlistDescription && (
+                <p className="text-[11px] text-slate-400 leading-relaxed">{playlistDescription}</p>
               )}
-              <span>{isGeneratingPlaylist ? '選曲中...' : 'AIでBGM選曲'}</span>
-            </button>
+
+              <div className="flex items-center space-x-2 pt-1">
+                <a
+                  href={`https://open.spotify.com/search/${encodeURIComponent(playlistTitle)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 py-1.5 px-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-emerald-400 rounded-lg text-[11px] font-semibold flex items-center justify-center space-x-1 transition-all"
+                >
+                  <span>Spotify</span>
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+                <a
+                  href={`https://music.youtube.com/search?q=${encodeURIComponent(playlistTitle)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 py-1.5 px-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-rose-400 rounded-lg text-[11px] font-semibold flex items-center justify-center space-x-1 transition-all"
+                >
+                  <span>YouTube Music</span>
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
+            </div>
           )}
         </div>
-
-        {playlistTitle && (
-          <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
-            <p className="text-xs font-bold text-slate-200 flex items-center space-x-1.5">
-              <Headphones className="h-3.5 w-3.5 text-blue-400" />
-              <span>{playlistTitle}</span>
-            </p>
-            {playlistDescription && (
-              <p className="text-[11px] text-slate-400 leading-relaxed">{playlistDescription}</p>
-            )}
-
-            <div className="flex items-center space-x-2 pt-1">
-              <a
-                href={`https://open.spotify.com/search/${encodeURIComponent(playlistTitle)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 py-1.5 px-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-emerald-400 rounded-lg text-[11px] font-semibold flex items-center justify-center space-x-1 transition-all"
-              >
-                <span>Spotify</span>
-                <ExternalLink className="h-3 w-3" />
-              </a>
-              <a
-                href={`https://music.youtube.com/search?q=${encodeURIComponent(playlistTitle)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 py-1.5 px-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-rose-400 rounded-lg text-[11px] font-semibold flex items-center justify-center space-x-1 transition-all"
-              >
-                <span>YouTube Music</span>
-                <ExternalLink className="h-3 w-3" />
-              </a>
-            </div>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Save Route Form Section */}
       <div className="border-t border-slate-800/80 pt-4 space-y-3">
