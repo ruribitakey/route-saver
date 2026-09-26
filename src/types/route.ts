@@ -23,6 +23,9 @@ export interface SavedRoute {
   tollMode?: TollModeType;
   maxTollAmount?: number;
   isNightSafeMode?: boolean;
+  playlistTitle?: string;
+  playlistUrl?: string;
+  playlistDescription?: string;
   encodedPolyline?: string;
   distanceMeters?: number;
   durationSeconds?: number;

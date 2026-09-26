@@ -15,6 +15,8 @@ import {
   Calendar,
   Compass,
   Navigation,
+  Music,
+  ExternalLink,
 } from 'lucide-react';
 import { generateGPX, generateKML, downloadFile, getSmartFilename } from '@/lib/gpx-kml-exporter';
 import { generateGoogleMapsNavigationUrl } from '@/lib/google-maps-url';
@@ -206,13 +208,43 @@ export const SavedRoutesList: React.FC<SavedRoutesListProps> = ({
                 )}
               </div>
 
+                {/* Drive Playlist Info if saved */}
+                {route.playlistTitle && (
+                  <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 space-y-1 text-xs">
+                    <p className="font-bold text-slate-200 flex items-center space-x-1">
+                      <Music className="h-3.5 w-3.5 text-blue-400" />
+                      <span className="truncate">{route.playlistTitle}</span>
+                    </p>
+                    <div className="flex items-center space-x-2 pt-1">
+                      <a
+                        href={`https://open.spotify.com/search/${encodeURIComponent(route.playlistTitle)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] text-emerald-400 hover:underline flex items-center space-x-0.5"
+                      >
+                        <span>Spotify</span>
+                        <ExternalLink className="h-2.5 w-2.5" />
+                      </a>
+                      <a
+                        href={`https://music.youtube.com/search?q=${encodeURIComponent(route.playlistTitle)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] text-rose-400 hover:underline flex items-center space-x-0.5"
+                      >
+                        <span>YouTube Music</span>
+                        <ExternalLink className="h-2.5 w-2.5" />
+                      </a>
+                    </div>
+                  </div>
+                )}
+
               {/* Card Footer Actions */}
               <div className="pt-3 border-t border-slate-800 space-y-2">
                 <a
                   href={generateGoogleMapsNavigationUrl(route)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full py-2.5 px-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold flex items-center justify-center space-x-2 shadow-md shadow-blue-600/30 transition-all"
+                  className="w-full py-2.5 px-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center justify-center space-x-2 shadow-sm transition-all"
                 >
                   <Navigation className="h-4 w-4" />
                   <span>🧭 Googleマップでナビ開始</span>

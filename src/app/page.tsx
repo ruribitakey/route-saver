@@ -11,7 +11,11 @@ import { signInWithPopup, signOut, onAuthStateChanged, User } from 'firebase/aut
 import { collection, addDoc, getDocs, deleteDoc, doc, query, where } from 'firebase/firestore';
 import { fetchCurrentLocationPoint } from '@/lib/geolocation';
 
-import { generateRouteDescriptionWithGemini, suggestNightSafeWaypointsWithGemini } from '@/lib/gemini';
+import {
+  generateRouteDescriptionWithGemini,
+  suggestNightSafeWaypointsWithGemini,
+  generateDrivePlaylistWithGemini,
+} from '@/lib/gemini';
 
 export default function Home() {
   // Auth State
@@ -45,6 +49,12 @@ export default function Home() {
   const [title, setTitle] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [tagsString, setTagsString] = useState<string>('');
+
+  // Playlist State
+  const [playlistTitle, setPlaylistTitle] = useState<string>('');
+  const [playlistDescription, setPlaylistDescription] = useState<string>('');
+  const [playlistUrl, setPlaylistUrl] = useState<string>('');
+  const [isGeneratingPlaylist, setIsGeneratingPlaylist] = useState<boolean>(false);
 
   // Calculated Route Details
   const [calculatedData, setCalculatedData] = useState<{
@@ -121,6 +131,8 @@ export default function Home() {
           tollMode: 'HIGHWAY',
           maxTollAmount: 300,
           isNightSafeMode: false,
+          playlistTitle: '深夜の高速道路・City Pop & Chillソング',
+          playlistDescription: '夜間ドライブを彩る爽やかなシティポップ＆チルアウト集',
           distanceMeters: 175000,
           durationSeconds: 8400,
           createdAt: new Date().toISOString(),
@@ -173,6 +185,25 @@ export default function Home() {
     if (!val) {
       // Remove only AI-generated waypoints when night safe mode is turned off
       setWaypoints((prev) => prev.filter((w) => !w.isAiGenerated));
+    }
+  };
+
+  // Generate Drive Playlist via Gemini AI
+  const handleGeneratePlaylist = async () => {
+    if (!origin.name || !destination.name) {
+      alert('プレイリスト選曲を行う前に、出発地と目的地を入力してください。');
+      return;
+    }
+    setIsGeneratingPlaylist(true);
+    try {
+      const res = await generateDrivePlaylistWithGemini(origin, destination, travelMode, isNightSafeMode);
+      setPlaylistTitle(res.playlistTitle);
+      setPlaylistDescription(res.playlistDescription);
+      setPlaylistUrl(`https://open.spotify.com/search/${encodeURIComponent(res.searchQuery)}`);
+    } catch (e) {
+      console.warn('Playlist generation error', e);
+    } finally {
+      setIsGeneratingPlaylist(false);
     }
   };
 
@@ -247,6 +278,9 @@ export default function Home() {
       tollMode,
       maxTollAmount,
       isNightSafeMode,
+      playlistTitle,
+      playlistDescription,
+      playlistUrl,
       encodedPolyline: calculatedData?.encodedPolyline || 'demo_polyline',
       distanceMeters: calculatedData?.distanceMeters || 175000,
       durationSeconds: calculatedData?.durationSeconds || 8400,
@@ -298,10 +332,13 @@ export default function Home() {
     setTravelMode(route.travelMode || 'DRIVING');
     setTollMode(route.tollMode || 'HIGHWAY');
     setMaxTollAmount(route.maxTollAmount || 300);
-    setIsNightSafeMode(route.isNightSafeMode ?? true);
+    setIsNightSafeMode(route.isNightSafeMode ?? false);
     setTitle(route.title);
     setDescription(route.description || '');
     setTagsString((route.tags || []).join(', '));
+    setPlaylistTitle(route.playlistTitle || '');
+    setPlaylistDescription(route.playlistDescription || '');
+    setPlaylistUrl(route.playlistUrl || '');
     setActiveTab('create');
     setCalcTrigger((prev) => prev + 1);
   };
@@ -346,6 +383,14 @@ export default function Home() {
                 setDescription={setDescription}
                 tagsString={tagsString}
                 setTagsString={setTagsString}
+                playlistTitle={playlistTitle}
+                setPlaylistTitle={setPlaylistTitle}
+                playlistDescription={playlistDescription}
+                setPlaylistDescription={setPlaylistDescription}
+                playlistUrl={playlistUrl}
+                setPlaylistUrl={setPlaylistUrl}
+                onGeneratePlaylist={handleGeneratePlaylist}
+                isGeneratingPlaylist={isGeneratingPlaylist}
                 onCalculateRoute={handleCalculateRoute}
                 onSaveRoute={handleSaveRoute}
                 isSaving={isSaving}

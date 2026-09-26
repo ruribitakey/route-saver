@@ -23,6 +23,72 @@ interface MapContainerProps {
   selectedRoute?: SavedRoute | null;
 }
 
+const GOOGLE_MAPS_DARK_STYLE = [
+  { elementType: 'geometry', stylers: [{ color: '#0f172a' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#0f172a' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#94a3b8' }] },
+  {
+    featureType: 'administrative.locality',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#cbd5e1' }],
+  },
+  {
+    featureType: 'poi',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#64748b' }],
+  },
+  {
+    featureType: 'poi.park',
+    elementType: 'geometry',
+    stylers: [{ color: '#1e293b' }],
+  },
+  {
+    featureType: 'road',
+    elementType: 'geometry',
+    stylers: [{ color: '#334155' }],
+  },
+  {
+    featureType: 'road',
+    elementType: 'geometry.stroke',
+    stylers: [{ color: '#1e293b' }],
+  },
+  {
+    featureType: 'road',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#94a3b8' }],
+  },
+  {
+    featureType: 'road.highway',
+    elementType: 'geometry',
+    stylers: [{ color: '#475569' }],
+  },
+  {
+    featureType: 'road.highway',
+    elementType: 'geometry.stroke',
+    stylers: [{ color: '#1e293b' }],
+  },
+  {
+    featureType: 'road.highway',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#f1f5f9' }],
+  },
+  {
+    featureType: 'transit',
+    elementType: 'geometry',
+    stylers: [{ color: '#1e293b' }],
+  },
+  {
+    featureType: 'water',
+    elementType: 'geometry',
+    stylers: [{ color: '#0284c7' }],
+  },
+  {
+    featureType: 'water',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#38bdf8' }],
+  },
+];
+
 export const MapContainer: React.FC<MapContainerProps> = ({
   origin,
   destination,
@@ -85,7 +151,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     }
   }, [apiKey, isDemoKey]);
 
-  // Initialize Map object
+  // Initialize Map object with dark mode styles
   useEffect(() => {
     if (!isMapLoaded || !window.google?.maps || !mapRef.current) return;
 
@@ -94,6 +160,9 @@ export const MapContainer: React.FC<MapContainerProps> = ({
       googleMapRef.current = new window.google.maps.Map(mapRef.current, {
         center,
         zoom: 10,
+        styles: GOOGLE_MAPS_DARK_STYLE,
+        disableDefaultUI: false,
+        zoomControl: true,
       });
 
       directionsRendererRef.current = new window.google.maps.DirectionsRenderer({
@@ -276,9 +345,9 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           {travelMode === 'DRIVING' && isNightSafeMode && (
             <>
               <div className="h-6 w-px bg-slate-800" />
-              <div className="flex items-center space-x-1.5 bg-indigo-900/60 border border-indigo-500/40 px-2.5 py-1 rounded-lg text-indigo-300">
-                <Moon className="h-4 w-4 text-indigo-400" />
-                <span className="text-xs font-bold">夜間安心優先</span>
+              <div className="flex items-center space-x-1.5 bg-slate-800 border border-slate-700 px-2.5 py-1 rounded-lg text-slate-300">
+                <Moon className="h-3.5 w-3.5 text-blue-400" />
+                <span className="text-xs font-semibold">夜間安心優先</span>
               </div>
             </>
           )}
@@ -289,7 +358,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
             href={navigationUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-md shadow-blue-600/30 flex items-center space-x-1.5 transition-all pointer-events-auto shrink-0"
+            className="bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold shadow-sm flex items-center space-x-1.5 transition-all pointer-events-auto shrink-0"
           >
             <Navigation className="h-3.5 w-3.5" />
             <span>ナビ起動</span>

@@ -19,6 +19,9 @@ import {
   Zap,
   ShieldCheck,
   Moon,
+  Music,
+  Headphones,
+  ExternalLink,
 } from 'lucide-react';
 import { LocationPoint, TravelModeType, TollModeType } from '@/types/route';
 import { PlaceAutocompleteInput } from '@/components/PlaceAutocompleteInput';
@@ -46,6 +49,14 @@ interface RouteFormProps {
   setDescription: (desc: string) => void;
   tagsString: string;
   setTagsString: (tags: string) => void;
+  playlistTitle?: string;
+  setPlaylistTitle?: (val: string) => void;
+  playlistDescription?: string;
+  setPlaylistDescription?: (val: string) => void;
+  playlistUrl?: string;
+  setPlaylistUrl?: (val: string) => void;
+  onGeneratePlaylist?: () => void;
+  isGeneratingPlaylist?: boolean;
   onCalculateRoute: () => void;
   onSaveRoute: () => void;
   isSaving: boolean;
@@ -73,6 +84,14 @@ export const RouteForm: React.FC<RouteFormProps> = ({
   setDescription,
   tagsString,
   setTagsString,
+  playlistTitle = '',
+  setPlaylistTitle,
+  playlistDescription = '',
+  setPlaylistDescription,
+  playlistUrl = '',
+  setPlaylistUrl,
+  onGeneratePlaylist,
+  isGeneratingPlaylist = false,
   onCalculateRoute,
   onSaveRoute,
   isSaving,
@@ -138,82 +157,87 @@ export const RouteForm: React.FC<RouteFormProps> = ({
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl text-slate-100 space-y-6">
-      <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h2 className="text-lg font-bold flex items-center space-x-2 text-white">
-          <Navigation className="h-5 w-5 text-blue-500" />
-          <span>ルート作成・検索</span>
+    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl text-slate-100 space-y-6">
+      {/* Header Title */}
+      <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+        <h2 className="text-base font-bold flex items-center space-x-2 text-white">
+          <Navigation className="h-4 w-4 text-blue-500" />
+          <span>ルート検索・作成</span>
         </h2>
-        <span className="text-xs text-slate-400 bg-slate-800 px-2.5 py-1 rounded-full border border-slate-700">
+        <span className="text-xs text-slate-400 bg-slate-950 px-2.5 py-1 rounded-md border border-slate-800">
           経由地: {waypoints.length}箇所
         </span>
       </div>
 
-      {/* Travel Mode Selector */}
-      <div className="grid grid-cols-3 gap-2 p-1 bg-slate-950 rounded-xl border border-slate-800">
-        <button
-          type="button"
-          onClick={() => setTravelMode('DRIVING')}
-          className={`flex items-center justify-center space-x-2 py-2 rounded-lg text-sm font-medium transition-all ${
-            travelMode === 'DRIVING'
-              ? 'bg-blue-600 text-white shadow-md'
-              : 'text-slate-400 hover:text-white'
-          }`}
-        >
-          <Car className="h-4 w-4" />
-          <span>ドライブ</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setTravelMode('BICYCLING')}
-          className={`flex items-center justify-center space-x-2 py-2 rounded-lg text-sm font-medium transition-all ${
-            travelMode === 'BICYCLING'
-              ? 'bg-blue-600 text-white shadow-md'
-              : 'text-slate-400 hover:text-white'
-          }`}
-        >
-          <Bike className="h-4 w-4" />
-          <span>自転車</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setTravelMode('WALKING')}
-          className={`flex items-center justify-center space-x-2 py-2 rounded-lg text-sm font-medium transition-all ${
-            travelMode === 'WALKING'
-              ? 'bg-blue-600 text-white shadow-md'
-              : 'text-slate-400 hover:text-white'
-          }`}
-        >
-          <Footprints className="h-4 w-4" />
-          <span>徒歩</span>
-        </button>
+      {/* Travel Mode Segmented Control */}
+      <div className="space-y-1.5">
+        <label className="text-xs font-semibold text-slate-400">移動手段</label>
+        <div className="grid grid-cols-3 gap-1 p-1 bg-slate-950 rounded-xl border border-slate-800">
+          <button
+            type="button"
+            onClick={() => setTravelMode('DRIVING')}
+            className={`flex items-center justify-center space-x-1.5 py-2 rounded-lg text-xs font-semibold transition-all ${
+              travelMode === 'DRIVING'
+                ? 'bg-blue-600 text-white shadow-sm font-bold'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Car className="h-3.5 w-3.5" />
+            <span>ドライブ</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setTravelMode('BICYCLING')}
+            className={`flex items-center justify-center space-x-1.5 py-2 rounded-lg text-xs font-semibold transition-all ${
+              travelMode === 'BICYCLING'
+                ? 'bg-blue-600 text-white shadow-sm font-bold'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Bike className="h-3.5 w-3.5" />
+            <span>自転車</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setTravelMode('WALKING')}
+            className={`flex items-center justify-center space-x-1.5 py-2 rounded-lg text-xs font-semibold transition-all ${
+              travelMode === 'WALKING'
+                ? 'bg-blue-600 text-white shadow-sm font-bold'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Footprints className="h-3.5 w-3.5" />
+            <span>徒歩</span>
+          </button>
+        </div>
       </div>
 
-      {/* Toll Road Mode & Night Safe Mode Selectors */}
+      {/* Toll Road & Night Mode Section */}
       {travelMode === 'DRIVING' && (
-        <div className="space-y-3">
-          <div className="space-y-2 bg-slate-950 p-3 rounded-xl border border-slate-800">
-            <div className="flex items-center justify-between text-xs font-semibold text-slate-300 mb-1">
-              <span className="flex items-center space-x-1">
-                <Coins className="h-4 w-4 text-amber-400" />
-                <span>有料道路の優先設定</span>
+        <div className="space-y-4 pt-2 border-t border-slate-800/80">
+          {/* Toll Mode Segment */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs text-slate-400">
+              <span className="flex items-center space-x-1 font-semibold text-slate-300">
+                <Coins className="h-3.5 w-3.5 text-blue-400" />
+                <span>有料道路の優先度</span>
               </span>
               <span className="text-[11px] text-slate-400">
                 {tollMode === 'SMART_SAVINGS'
-                  ? `格安バイパス可 (${maxTollAmount}円以下)`
+                  ? `格安バイパス優先 (${maxTollAmount}円以下)`
                   : tollMode === 'HIGHWAY'
-                  ? '全高速道路を使用'
+                  ? '高速道路優先'
                   : '完全一般道'}
               </span>
             </div>
 
-            <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-900 rounded-lg border border-slate-800">
+            <div className="grid grid-cols-3 gap-1 p-1 bg-slate-950 rounded-xl border border-slate-800">
               <button
                 type="button"
                 onClick={() => setTollMode('HIGHWAY')}
-                className={`py-1.5 px-2 rounded-md text-xs font-medium flex items-center justify-center space-x-1 transition-all ${
+                className={`py-1.5 px-2 rounded-lg text-xs font-medium flex items-center justify-center space-x-1 transition-all ${
                   tollMode === 'HIGHWAY'
-                    ? 'bg-slate-700 text-white shadow-sm font-bold'
+                    ? 'bg-slate-800 text-white font-bold border border-slate-700 shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -224,51 +248,48 @@ export const RouteForm: React.FC<RouteFormProps> = ({
               <button
                 type="button"
                 onClick={() => setTollMode('SMART_SAVINGS')}
-                className={`py-1.5 px-2 rounded-md text-xs font-medium flex items-center justify-center space-x-1 transition-all ${
+                className={`py-1.5 px-2 rounded-lg text-xs font-medium flex items-center justify-center space-x-1 transition-all ${
                   tollMode === 'SMART_SAVINGS'
-                    ? 'bg-emerald-600 text-white shadow-sm font-bold'
+                    ? 'bg-slate-800 text-emerald-400 font-bold border border-slate-700 shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                <Coins className="h-3.5 w-3.5 text-emerald-300" />
+                <Coins className="h-3.5 w-3.5 text-emerald-400" />
                 <span>スマート節約</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setTollMode('FREE_ROADS')}
-                className={`py-1.5 px-2 rounded-md text-xs font-medium flex items-center justify-center space-x-1 transition-all ${
+                className={`py-1.5 px-2 rounded-lg text-xs font-medium flex items-center justify-center space-x-1 transition-all ${
                   tollMode === 'FREE_ROADS'
-                    ? 'bg-blue-600 text-white shadow-sm font-bold'
+                    ? 'bg-slate-800 text-blue-400 font-bold border border-slate-700 shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                <ShieldCheck className="h-3.5 w-3.5 text-blue-300" />
+                <ShieldCheck className="h-3.5 w-3.5 text-blue-400" />
                 <span>完全一般道</span>
               </button>
             </div>
 
-            {/* Smart Savings Max Toll Threshold Selector (3 Clean Preset Patterns) */}
+            {/* Smart Savings Presets */}
             {tollMode === 'SMART_SAVINGS' && (
-              <div className="pt-2 space-y-1.5 border-t border-slate-800/80">
-                <div className="flex items-center justify-between text-[11px] text-slate-400">
-                  <span>許容区間料金上限設定:</span>
-                  <span className="font-bold text-emerald-400">{maxTollAmount}円以下</span>
-                </div>
-                <div className="grid grid-cols-3 gap-1.5">
+              <div className="pt-2 flex items-center justify-between gap-2">
+                <span className="text-[11px] text-slate-400 shrink-0">上限料金:</span>
+                <div className="grid grid-cols-3 gap-1.5 flex-1">
                   {[
-                    { amt: 100, label: '100円 (超格安)' },
-                    { amt: 300, label: '300円 (標準)' },
-                    { amt: 500, label: '500円 (ワンコイン)' },
+                    { amt: 100, label: '100円' },
+                    { amt: 300, label: '300円' },
+                    { amt: 500, label: '500円' },
                   ].map((preset) => (
                     <button
                       key={preset.amt}
                       type="button"
                       onClick={() => setMaxTollAmount(preset.amt)}
-                      className={`py-1.5 px-2 rounded-lg text-xs font-medium transition-all ${
+                      className={`py-1 px-2 rounded-lg text-xs font-medium transition-all ${
                         maxTollAmount === preset.amt
-                          ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/20'
-                          : 'bg-slate-900 text-slate-300 hover:bg-slate-800 border border-slate-800'
+                          ? 'bg-blue-600 text-white font-bold shadow-sm'
+                          : 'bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800'
                       }`}
                     >
                       {preset.label}
@@ -279,55 +300,49 @@ export const RouteForm: React.FC<RouteFormProps> = ({
             )}
           </div>
 
-          {/* Night Safe Drive Mode Toggle */}
-          <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <div className={`p-1.5 rounded-lg transition-all ${isNightSafeMode ? 'bg-indigo-600/30 text-indigo-400 border border-indigo-500/40' : 'bg-slate-800 text-slate-400'}`}>
-                  <Moon className="h-4 w-4" />
-                </div>
-                <div>
-                  <span className="text-xs font-bold text-slate-200">🌙 夜間安心モード</span>
-                  <p className="text-[11px] text-slate-400">検索時にGemini AIが主要交差点・ICを自動判定し裏道をカット</p>
-                </div>
-              </label>
-              <button
-                type="button"
-                onClick={() => setIsNightSafeMode(!isNightSafeMode)}
-                className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${
-                  isNightSafeMode ? 'bg-indigo-600 justify-end' : 'bg-slate-800 justify-start'
-                }`}
-              >
-                <div className="w-4 h-4 rounded-full bg-white shadow-md" />
-              </button>
-            </div>
+          {/* Night Safe Mode Toggle */}
+          <div className="flex items-center justify-between py-2 px-3 bg-slate-950 rounded-xl border border-slate-800">
+            <label className="flex items-center space-x-2.5 cursor-pointer">
+              <Moon className={`h-4 w-4 ${isNightSafeMode ? 'text-blue-400' : 'text-slate-500'}`} />
+              <div>
+                <span className="text-xs font-semibold text-slate-200">🌙 夜間安心モード</span>
+                <p className="text-[10px] text-slate-400">Gemini AIが主要バイパス・ICを経由地に挿入</p>
+              </div>
+            </label>
+            <button
+              type="button"
+              onClick={() => setIsNightSafeMode(!isNightSafeMode)}
+              className={`w-10 h-5 flex items-center rounded-full p-0.5 transition-colors ${
+                isNightSafeMode ? 'bg-blue-600 justify-end' : 'bg-slate-800 justify-start'
+              }`}
+            >
+              <div className="w-4 h-4 rounded-full bg-white shadow-sm" />
+            </button>
           </div>
         </div>
       )}
 
-      {/* Origin, Waypoints, Destination Inputs with Places Autocomplete */}
-      <div className="space-y-3">
-        {/* Origin */}
+      {/* Origin, Waypoints, Destination Inputs */}
+      <div className="space-y-3 pt-2 border-t border-slate-800/80">
         <PlaceAutocompleteInput
           value={origin.name}
           onChange={setOrigin}
           placeholder="出発地を検索・選択 (例: 大阪駅)"
           badgeLabel="発"
-          badgeColorClass="bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
+          badgeColorClass="bg-slate-800 text-emerald-400 border-slate-700"
         />
 
-        {/* Waypoints List */}
         {waypoints.map((wp, idx) => (
-          <div key={idx} className="flex items-center space-x-2 pl-4 border-l-2 border-slate-800">
+          <div key={idx} className="flex items-center space-x-2 pl-3 border-l-2 border-slate-800">
             <PlaceAutocompleteInput
               value={wp.name}
               onChange={(pt) => updateWaypointPoint(idx, pt)}
-              placeholder={`経由地 ${idx + 1} を検索・選択 (例: 明石海峡大橋)`}
+              placeholder={`経由地 ${idx + 1} を検索・選択`}
               badgeLabel={wp.isAiGenerated ? '✨AI' : `経${idx + 1}`}
               badgeColorClass={
                 wp.isAiGenerated
-                  ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40 font-bold'
-                  : 'bg-amber-500/20 text-amber-400 border-amber-500/40'
+                  ? 'bg-blue-950 text-blue-300 border-blue-800 font-semibold'
+                  : 'bg-slate-800 text-amber-400 border-slate-700'
               }
             />
             <div className="flex items-center space-x-1 shrink-0">
@@ -335,60 +350,58 @@ export const RouteForm: React.FC<RouteFormProps> = ({
                 type="button"
                 onClick={() => moveWaypoint(idx, 'up')}
                 disabled={idx === 0}
-                className="p-1.5 text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:text-slate-400"
+                className="p-1 text-slate-400 hover:text-white disabled:opacity-30"
               >
-                <ArrowUp className="h-4 w-4" />
+                <ArrowUp className="h-3.5 w-3.5" />
               </button>
               <button
                 type="button"
                 onClick={() => moveWaypoint(idx, 'down')}
                 disabled={idx === waypoints.length - 1}
-                className="p-1.5 text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:text-slate-400"
+                className="p-1 text-slate-400 hover:text-white disabled:opacity-30"
               >
-                <ArrowDown className="h-4 w-4" />
+                <ArrowDown className="h-3.5 w-3.5" />
               </button>
               <button
                 type="button"
                 onClick={() => removeWaypoint(idx)}
-                className="p-1.5 text-slate-400 hover:text-red-400 transition-colors"
+                className="p-1 text-slate-400 hover:text-red-400 transition-colors"
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-3.5 w-3.5" />
               </button>
             </div>
           </div>
         ))}
 
-        {/* Add Waypoint Button */}
         <button
           type="button"
           onClick={addWaypoint}
-          className="w-full py-2 bg-slate-800/60 hover:bg-slate-800 border border-dashed border-slate-700 rounded-xl text-xs font-semibold text-blue-400 hover:text-blue-300 flex items-center justify-center space-x-1.5 transition-all"
+          className="w-full py-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-xl text-xs font-semibold text-blue-400 hover:text-blue-300 flex items-center justify-center space-x-1.5 transition-all"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-3.5 w-3.5" />
           <span>＋ 経由地を追加</span>
         </button>
 
-        {/* Destination */}
         <PlaceAutocompleteInput
           value={destination.name}
           onChange={setDestination}
-          placeholder="目的地を検索・選択 (例: 洲本温泉)"
+          placeholder="目的地を検索・選択 (例: 名古屋駅)"
           badgeLabel="着"
-          badgeColorClass="bg-rose-500/20 text-rose-400 border-rose-500/40"
+          badgeColorClass="bg-slate-800 text-rose-400 border-slate-700"
         />
       </div>
 
-      {/* Search Route Button */}
+      {/* Calculate Route Primary Action Button */}
       <button
         type="button"
         onClick={onCalculateRoute}
         disabled={isAnalyzingNightRoute}
-        className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold text-sm shadow-lg shadow-blue-600/30 flex items-center justify-center space-x-2 transition-all disabled:opacity-60"
+        className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-xs shadow-sm flex items-center justify-center space-x-2 transition-all disabled:opacity-60"
       >
         {isAnalyzingNightRoute ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin text-amber-300" />
-            <span>✨ Gemini AIが安全ルート交差点を解析中...</span>
+            <span>✨ Gemini AIが安全交差点を解析中...</span>
           </>
         ) : (
           <>
@@ -398,78 +411,132 @@ export const RouteForm: React.FC<RouteFormProps> = ({
         )}
       </button>
 
-      {/* Save Details & Gemini AI Section */}
-      <div className="border-t border-slate-800 pt-4 space-y-4">
+      {/* Drive Playlist Section */}
+      <div className="border-t border-slate-800/80 pt-4 space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-slate-300 flex items-center space-x-2">
+          <h3 className="text-xs font-bold text-slate-300 flex items-center space-x-1.5">
+            <Music className="h-4 w-4 text-blue-400" />
+            <span>🎵 ドライブBGM プレイリスト</span>
+          </h3>
+          {onGeneratePlaylist && (
+            <button
+              type="button"
+              onClick={onGeneratePlaylist}
+              disabled={isGeneratingPlaylist}
+              className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-medium flex items-center space-x-1 transition-all disabled:opacity-50"
+            >
+              {isGeneratingPlaylist ? (
+                <Loader2 className="h-3 w-3 animate-spin text-blue-400" />
+              ) : (
+                <Sparkles className="h-3 w-3 text-amber-300" />
+              )}
+              <span>{isGeneratingPlaylist ? '選曲中...' : 'AIでBGM選曲'}</span>
+            </button>
+          )}
+        </div>
+
+        {playlistTitle && (
+          <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
+            <p className="text-xs font-bold text-slate-200 flex items-center space-x-1.5">
+              <Headphones className="h-3.5 w-3.5 text-blue-400" />
+              <span>{playlistTitle}</span>
+            </p>
+            {playlistDescription && (
+              <p className="text-[11px] text-slate-400 leading-relaxed">{playlistDescription}</p>
+            )}
+
+            <div className="flex items-center space-x-2 pt-1">
+              <a
+                href={`https://open.spotify.com/search/${encodeURIComponent(playlistTitle)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 py-1.5 px-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-emerald-400 rounded-lg text-[11px] font-semibold flex items-center justify-center space-x-1 transition-all"
+              >
+                <span>Spotify</span>
+                <ExternalLink className="h-3 w-3" />
+              </a>
+              <a
+                href={`https://music.youtube.com/search?q=${encodeURIComponent(playlistTitle)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 py-1.5 px-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-rose-400 rounded-lg text-[11px] font-semibold flex items-center justify-center space-x-1 transition-all"
+              >
+                <span>YouTube Music</span>
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Save Route Form Section */}
+      <div className="border-t border-slate-800/80 pt-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-bold text-slate-300 flex items-center space-x-1.5">
             <FileText className="h-4 w-4 text-blue-400" />
-            <span>ルート情報の保存</span>
+            <span>ルート情報の保存メモ</span>
           </h3>
 
-          {/* Gemini AI Generate Button */}
           <button
             type="button"
             onClick={handleGenerateAI}
             disabled={isGeneratingAI}
-            className="flex items-center space-x-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-semibold rounded-lg shadow-md shadow-purple-600/30 transition-all disabled:opacity-50"
+            className="flex items-center space-x-1 px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg border border-slate-700 transition-all disabled:opacity-50"
           >
             {isGeneratingAI ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <Loader2 className="h-3 w-3 animate-spin text-blue-400" />
             ) : (
-              <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+              <Sparkles className="h-3 w-3 text-amber-300" />
             )}
-            <span>{isGeneratingAI ? 'AI生成中...' : '✨ Geminiでメモを自動生成'}</span>
+            <span>{isGeneratingAI ? '生成中...' : '✨ AIメモ生成'}</span>
           </button>
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-slate-400 mb-1">ルートのタイトル</label>
+          <label className="block text-[11px] font-medium text-slate-400 mb-1">ルートタイトル</label>
           <input
             type="text"
-            placeholder="例: 大阪発 明石海峡大橋ドライブ＆洲本温泉旅"
+            placeholder="例: 大阪〜名古屋 快適ドライブ"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-slate-400 mb-1">メモ / 説明</label>
+          <label className="block text-[11px] font-medium text-slate-400 mb-1">説明 / メモ</label>
           <textarea
-            placeholder="立ち寄りスポットや注意事項など"
+            placeholder="立ち寄りスポットや注意事項"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={2}
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-slate-400 mb-1 flex items-center space-x-1">
+          <label className="block text-[11px] font-medium text-slate-400 mb-1 flex items-center space-x-1">
             <Tag className="h-3 w-3 text-slate-400" />
             <span>タグ (カンマ区切り)</span>
           </label>
           <input
             type="text"
-            placeholder="例: ドライブ, 温泉, 淡路島"
+            placeholder="例: ドライブ, 観光, 高速優先"
             value={tagsString}
             onChange={(e) => setTagsString(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
           />
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-col space-y-2 pt-2">
-          <button
-            type="button"
-            onClick={onSaveRoute}
-            disabled={isSaving}
-            className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl font-semibold text-sm shadow-lg shadow-emerald-600/30 flex items-center justify-center space-x-2 transition-all disabled:opacity-50"
-          >
-            <Save className="h-4 w-4" />
-            <span>{isSaving ? '保存中...' : 'クラウドにルートを保存'}</span>
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={onSaveRoute}
+          disabled={isSaving}
+          className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-xs shadow-sm flex items-center justify-center space-x-2 transition-all disabled:opacity-50"
+        >
+          <Save className="h-4 w-4" />
+          <span>{isSaving ? '保存中...' : 'クラウドにルートを保存'}</span>
+        </button>
       </div>
     </div>
   );

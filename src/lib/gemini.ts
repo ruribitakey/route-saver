@@ -229,3 +229,87 @@ JSONオブジェクトのみを出力してください。キーは "waypoints" 
     return getSmartFallbackNightWaypoints(origin, destination, tollMode);
   }
 }
+
+export interface DrivePlaylistSuggestion {
+  playlistTitle: string;
+  playlistDescription: string;
+  searchQuery: string;
+  recommendedSongs: string[];
+}
+
+/**
+ * Call Gemini API to recommend a drive music playlist based on route mood, origin, destination, and travel mode.
+ */
+export async function generateDrivePlaylistWithGemini(
+  origin: LocationPoint,
+  destination: LocationPoint,
+  travelMode: TravelModeType,
+  isNight: boolean = false
+): Promise<DrivePlaylistSuggestion> {
+  const apiKey =
+    process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+  const modeText = travelMode === 'DRIVING' ? 'ドライブ' : travelMode === 'BICYCLING' ? 'サイクリング' : '散策';
+  const defaultQuery = `${destination.name || 'ドライブ'} BGM`;
+
+  if (!apiKey || apiKey.includes('demo')) {
+    await new Promise((res) => setTimeout(res, 500));
+    return {
+      playlistTitle: `${origin.name || '出発地'} ➔ ${destination.name || '目的地'} 快適${modeText}ソング`,
+      playlistDescription: `${isNight ? '夜の高速道路・街明かりに映えるChill & City Popセレクション' : '爽やかな風を感じる快適ドライビングヒッツ'}`,
+      searchQuery: defaultQuery,
+      recommendedSongs: ['Plastic Love - 竹内まりや', 'Midnight City - M83', 'ドライブ BGM Best'],
+    };
+  }
+
+  const prompt = `あなたはドライブミュージックとプレイリストのスペシャリストです。
+出発地「${origin.name}」から目的地「${destination.name}」への${modeText}（${isNight ? '夜間' : '日中'}）に最高にフィットするおすすめ音楽プレイリストの提案をJSON形式で作成してください。
+
+【出力形式】
+JSONオブジェクトのみを出力してください。キーは "playlistTitle", "playlistDescription", "searchQuery", "recommendedSongs" です。
+例:
+{
+  "playlistTitle": "湘南・江の島 海沿い爽快ドライビングヒッツ",
+  "playlistDescription": "海風と夕焼けにぴったりなAOR・シティポップと最新邦楽ヒット曲をブレンド",
+  "searchQuery": "ドライブ シティポップ AOR",
+  "recommendedSongs": ["RIDE ON TIME - 山下達郎", "エイリアンズ - キリンジ", "ナイトクルージング - サカナクション"]
+}`;
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            responseMimeType: 'application/json',
+          },
+        }),
+      }
+    );
+
+    if (!response.ok) throw new Error(`Gemini API Error: ${response.statusText}`);
+
+    const data = await response.json();
+    const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const parsed = JSON.parse(textResponse);
+    return {
+      playlistTitle: parsed.playlistTitle || `${origin.name}〜${destination.name} ${modeText}BGM`,
+      playlistDescription: parsed.playlistDescription || '気分を高めるおすすめプレイリスト',
+      searchQuery: parsed.searchQuery || defaultQuery,
+      recommendedSongs: parsed.recommendedSongs || [],
+    };
+  } catch (error) {
+    console.warn('Gemini playlist generation failed, fallback used', error);
+    return {
+      playlistTitle: `${origin.name} ➔ ${destination.name} ${modeText}BGM`,
+      playlistDescription: '快適な音楽とともにドライブをお楽しみください。',
+      searchQuery: defaultQuery,
+      recommendedSongs: ['ドライブ BGM'],
+    };
+  }
+}
